@@ -1,0 +1,4 @@
+```release-note:bug
+resource/aws_billing_view: Fix "inconsistent result" errors caused by ordering differences in `data_filter_expression.dimensions.values`
+```
+
