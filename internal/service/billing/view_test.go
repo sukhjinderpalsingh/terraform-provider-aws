@@ -276,6 +276,16 @@ func TestAccBillingView_dataFilterExpressionDimensions(t *testing.T) {
 				),
 			},
 			{
+				Config: testAccViewConfig_dataFilterExpressionDimensions(rName, "LINKED_ACCOUNT", []string{"999999999912", "111222333444"}),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckViewExists(ctx, resourceName, &view2),
+					resource.TestCheckResourceAttr(resourceName, "data_filter_expression.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "data_filter_expression.0.dimensions.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "data_filter_expression.0.dimensions.0.key", "LINKED_ACCOUNT"),
+					resource.TestCheckResourceAttr(resourceName, "data_filter_expression.0.dimensions.0.values.#", "2"),
+				),
+			},
+			{
 				ResourceName:                         resourceName,
 				ImportState:                          true,
 				ImportStateIdFunc:                    acctest.AttrImportStateIdFunc(resourceName, names.AttrARN),
