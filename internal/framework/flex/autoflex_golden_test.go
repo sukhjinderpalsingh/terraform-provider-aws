@@ -25,6 +25,7 @@ import (
 
 	"github.com/YakDriver/regexache"
 	"github.com/google/go-cmp/cmp"
+	testingiface "github.com/mitchellh/go-testing-interface"
 )
 
 var updateGolden = flag.Bool("update-golden", false, "update golden files")
@@ -115,7 +116,7 @@ func compareWithGolden(t *testing.T, goldenPath string, got any) {
 // autoGenerateGoldenPath creates a golden file path from test name and case description.
 // Automatically determines subdirectory from the test function name:
 // TestExpandLogging_collections -> searches for it in autoflex_*_test.go files
-func autoGenerateGoldenPath(t *testing.T, fullTestName, testCaseName string) string {
+func autoGenerateGoldenPath(t testingiface.T, fullTestName, testCaseName string) string {
 	t.Helper()
 	// Extract the base test function name from the full path
 	// fullTestName might be "TestExpandLogging_collections/Collection_of_primitive_types_Source_and_slice_or_map_of_primtive_types_Target"
@@ -156,7 +157,7 @@ func normalizeTestCaseName(name string) string {
 
 // determineSubdirectoryFromTestName determines the subdirectory based on which test file contains the test function.
 // Returns the subdirectory name (e.g., "dispatch", "maps") or "unknown" if not found.
-func determineSubdirectoryFromTestName(t *testing.T, testFunctionName string) string {
+func determineSubdirectoryFromTestName(t testingiface.T, testFunctionName string) string {
 	t.Helper()
 
 	files, err := filepath.Glob("autoflex_*_test.go")
@@ -176,7 +177,7 @@ func determineSubdirectoryFromTestName(t *testing.T, testFunctionName string) st
 
 // extractSubdirectoryFromFile attempts to find the test function in the given file
 // and returns the subdirectory name if found, empty string otherwise.
-func extractSubdirectoryFromFile(t *testing.T, filename, testFunctionName string) string {
+func extractSubdirectoryFromFile(t testingiface.T, filename, testFunctionName string) string {
 	t.Helper()
 
 	content, err := os.ReadFile(filename)
@@ -193,7 +194,7 @@ func extractSubdirectoryFromFile(t *testing.T, filename, testFunctionName string
 }
 
 // containsTestFunction checks if the file content contains the specified test function definition.
-func containsTestFunction(t *testing.T, content []byte, testFunctionName string) bool {
+func containsTestFunction(t testingiface.T, content []byte, testFunctionName string) bool {
 	t.Helper()
 
 	pattern := fmt.Sprintf(`func\s+%s\s*\(`, regexp.QuoteMeta(testFunctionName))

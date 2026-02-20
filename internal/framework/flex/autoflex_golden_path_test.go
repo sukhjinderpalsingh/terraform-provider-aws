@@ -4,8 +4,51 @@
 package flex
 
 import (
+	"strings"
 	"testing"
+
+	testingiface "github.com/mitchellh/go-testing-interface"
 )
+
+func TestGenerateGoldenPath(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		fullTestName string
+		expectedPath string
+	}{
+		"root test": {
+			fullTestName: "TestRoot",
+			expectedPath: "autoflex/unknown/root/testroot.golden",
+		},
+		"single level": {
+			fullTestName: "TestRoot/test case",
+			expectedPath: "autoflex/unknown/root/test_case.golden",
+		},
+		"multiple levels": {
+			fullTestName: "TestRoot/Outer Test-Case/inner test case",
+			expectedPath: "autoflex/unknown/root/inner_test_case.golden",
+		},
+	}
+
+	for testName, testCase := range testCases {
+		t.Run(testName, func(t *testing.T) {
+			t.Parallel()
+
+			fooT := &testingiface.RuntimeT{}
+
+			subtestName := testCase.fullTestName
+			if last := strings.LastIndex(subtestName, "/"); last > 0 {
+				subtestName = subtestName[last+1:]
+			}
+			path := autoGenerateGoldenPath(fooT, testCase.fullTestName, subtestName)
+
+			if path != testCase.expectedPath {
+				t.Errorf("Incorrect path %q, expected %q", path, testCase.expectedPath)
+			}
+		})
+	}
+}
 
 func TestNormalizeTestName(t *testing.T) {
 	t.Parallel()
