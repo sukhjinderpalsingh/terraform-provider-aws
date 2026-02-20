@@ -128,8 +128,7 @@ func autoGenerateGoldenPath(t testingiface.T, fullTestName string) string {
 
 	var cleanTestCases []string
 	if len(parts) > 1 {
-		var testCases []string
-		testCases = parts[1:]
+		testCases := parts[1:]
 		cleanTestCases = make([]string, len(testCases))
 
 		for i, testCase := range testCases {
