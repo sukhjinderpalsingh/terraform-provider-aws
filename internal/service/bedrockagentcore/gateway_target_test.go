@@ -1040,7 +1040,7 @@ resource "aws_bedrockagentcore_gateway_target" "test" {
   target_configuration {
     mcp {
       mcp_server {
-        endpoint = "https://example.com/mcp"
+        endpoint = "https://docs.mcp.cloudflare.com/mcp"
       }
     }
   }
@@ -1063,7 +1063,7 @@ resource "aws_bedrockagentcore_gateway_target" "test" {
   target_configuration {
     mcp {
       mcp_server {
-        endpoint = "https://example.com/mcp"
+        endpoint = "https://docs.mcp.cloudflare.com/mcp"
       }
     }
   }
