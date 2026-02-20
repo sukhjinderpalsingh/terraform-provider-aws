@@ -102,7 +102,10 @@ func (p *servicePackage) FrameworkResources(ctx context.Context) []*inttypes.Ser
 			Factory:  newOAuth2CredentialProviderResource,
 			TypeName: "aws_bedrockagentcore_oauth2_credential_provider",
 			Name:     "OAuth2 Credential Provider",
-			Region:   unique.Make(inttypes.ResourceRegionDefault()),
+			Tags: unique.Make(inttypes.ServicePackageResourceTags{
+				IdentifierAttribute: "credential_provider_arn",
+			}),
+			Region: unique.Make(inttypes.ResourceRegionDefault()),
 		},
 		{
 			Factory:  newTokenVaultCMKResource,
