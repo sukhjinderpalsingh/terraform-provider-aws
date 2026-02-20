@@ -60,6 +60,10 @@ func dataSourceWorkspace() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			names.AttrKMSKeyID: {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			names.AttrLastUpdatedDate: {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -139,6 +143,7 @@ func dataSourceWorkspaceRead(ctx context.Context, d *schema.ResourceData, meta a
 	d.Set(names.AttrDescription, workspace.Description)
 	d.Set(names.AttrEndpoint, workspace.Endpoint)
 	d.Set("grafana_version", workspace.GrafanaVersion)
+	d.Set(names.AttrKMSKeyID, workspace.KmsKeyId)
 	d.Set(names.AttrLastUpdatedDate, workspace.Modified.Format(time.RFC3339))
 	d.Set(names.AttrName, workspace.Name)
 	d.Set("notification_destinations", workspace.NotificationDestinations)

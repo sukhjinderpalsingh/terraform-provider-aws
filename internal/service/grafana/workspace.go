@@ -11,6 +11,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/YakDriver/regexache"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	"github.com/aws/aws-sdk-go-v2/service/grafana"
@@ -101,6 +102,19 @@ func resourceWorkspace() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+			},
+			names.AttrKMSKeyID: {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+				ValidateFunc: validation.All(
+					validation.StringLenBetween(1, 2048),
+					validation.StringMatch(
+						regexache.MustCompile(`^[a-zA-Z0-9:/_-]+$`),
+						"must contain only alphanumeric characters, colons, slashes, underscores, and hyphens",
+					),
+				),
 			},
 			names.AttrName: {
 				Type:     schema.TypeString,
@@ -219,6 +233,10 @@ func resourceWorkspaceCreate(ctx context.Context, d *schema.ResourceData, meta a
 		input.GrafanaVersion = aws.String(v.(string))
 	}
 
+	if v, ok := d.GetOk(names.AttrKMSKeyID); ok {
+		input.KmsKeyId = aws.String(v.(string))
+	}
+
 	if v, ok := d.GetOk(names.AttrName); ok {
 		input.WorkspaceName = aws.String(v.(string))
 	}
@@ -297,6 +315,7 @@ func resourceWorkspaceRead(ctx context.Context, d *schema.ResourceData, meta any
 	d.Set(names.AttrDescription, workspace.Description)
 	d.Set(names.AttrEndpoint, workspace.Endpoint)
 	d.Set("grafana_version", workspace.GrafanaVersion)
+	d.Set(names.AttrKMSKeyID, workspace.KmsKeyId)
 	d.Set(names.AttrName, workspace.Name)
 	if err := d.Set("network_access_control", flattenNetworkAccessControl(workspace.NetworkAccessControl)); err != nil {
 		return sdkdiag.AppendErrorf(diags, "setting network_access_control: %s", err)
