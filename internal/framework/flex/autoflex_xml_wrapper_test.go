@@ -183,9 +183,9 @@ func TestExpandXMLWrapperRule1ScalarElements(t *testing.T) {
 			t.Parallel()
 
 			if testName == "OriginSslProtocols" {
-				runAutoExpandTestCases(t, cases, runChecks{CompareDiags: true, CompareTarget: false, SkipGoldenLogs: true})
+				runAutoExpandTestCases(t, cases, runChecks{CompareDiags: true, CompareTarget: false})
 			} else {
-				runAutoExpandTestCases(t, cases, runChecks{CompareDiags: true, CompareTarget: true, SkipGoldenLogs: true})
+				runAutoExpandTestCases(t, cases, runChecks{CompareDiags: true, CompareTarget: true})
 			}
 		})
 	}
