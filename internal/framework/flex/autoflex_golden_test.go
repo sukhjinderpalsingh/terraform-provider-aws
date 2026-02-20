@@ -121,10 +121,8 @@ func autoGenerateGoldenPath(t testingiface.T, fullTestName, testCaseName string)
 	// Extract the base test function name from the full path
 	// fullTestName might be "TestExpandLogging_collections/Collection_of_primitive_types_Source_and_slice_or_map_of_primtive_types_Target"
 	// We want to extract "TestExpandLogging_collections"
-	baseName := fullTestName
-	if before, _, ok := strings.Cut(fullTestName, "/"); ok {
-		baseName = before
-	}
+	parts := strings.Split(fullTestName, "/")
+	baseName := parts[0]
 
 	cleanTestName := normalizeTestName(baseName)
 
