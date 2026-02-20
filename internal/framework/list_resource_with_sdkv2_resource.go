@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2014, 2025
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package framework
@@ -24,10 +24,7 @@ type WithRegionSpec interface {
 	SetRegionSpec(regionSpec unique.Handle[inttypes.ServicePackageResourceRegion])
 }
 
-// ListerSDK is an interface for resources that support List operations
-type ListerSDK interface {
-	AppendResultInterceptor(listresource.ListResultInterceptorSDK)
-}
+var _ Lister[listresource.InterceptorParamsSDK] = &ListResourceWithSDKv2Resource{}
 
 type ListResourceWithSDKv2Resource struct {
 	withListResourceConfigSchema
@@ -36,10 +33,10 @@ type ListResourceWithSDKv2Resource struct {
 	identitySpec   inttypes.Identity
 	identitySchema *schema.ResourceIdentity
 	regionSpec     unique.Handle[inttypes.ServicePackageResourceRegion]
-	interceptors   []listresource.ListResultInterceptorSDK
+	interceptors   []listresource.ListResultInterceptor[listresource.InterceptorParamsSDK]
 }
 
-func (l *ListResourceWithSDKv2Resource) AppendResultInterceptor(interceptor listresource.ListResultInterceptorSDK) {
+func (l *ListResourceWithSDKv2Resource) AppendResultInterceptor(interceptor listresource.ListResultInterceptor[listresource.InterceptorParamsSDK]) {
 	l.interceptors = append(l.interceptors, interceptor)
 }
 
@@ -87,30 +84,33 @@ func (l *ListResourceWithSDKv2Resource) SetIdentitySpec(identitySpec inttypes.Id
 	l.identitySpec = identitySpec
 }
 
-func (l *ListResourceWithSDKv2Resource) runResultInterceptors(ctx context.Context, when listresource.When, awsClient *conns.AWSClient, d *schema.ResourceData) error {
+func (l *ListResourceWithSDKv2Resource) runResultInterceptors(ctx context.Context, when listresource.When, awsClient *conns.AWSClient, d *schema.ResourceData, includeResource bool) diag.Diagnostics {
+	var diags diag.Diagnostics
 	params := listresource.InterceptorParamsSDK{
-		C:            awsClient,
-		ResourceData: d,
+		C:               awsClient,
+		IncludeResource: includeResource,
+		ResourceData:    d,
+		When:            when,
 	}
 
 	switch when {
 	case listresource.Before:
-		params.When = listresource.Before
 		for interceptor := range slices.Values(l.interceptors) {
-			if err := interceptor.Read(ctx, params); err != nil {
-				return err
+			diags.Append(interceptor.Read(ctx, params)...)
+			if diags.HasError() {
+				return diags
 			}
 		}
 	case listresource.After:
-		params.When = listresource.After
 		for interceptor := range tfslices.BackwardValues(l.interceptors) {
-			if err := interceptor.Read(ctx, params); err != nil {
-				return err
+			diags.Append(interceptor.Read(ctx, params)...)
+			if diags.HasError() {
+				return diags
 			}
 		}
 	}
 
-	return nil
+	return diags
 }
 
 func (l *ListResourceWithSDKv2Resource) RawV5Schemas(ctx context.Context, _ list.RawV5SchemaRequest, response *list.RawV5SchemaResponse) {
@@ -177,14 +177,8 @@ func getAttributeOk(d resourceData, name string) (string, bool) {
 // TODO modify to accept func() as parameter
 // will allow to use before interceptors as well
 func (l *ListResourceWithSDKv2Resource) SetResult(ctx context.Context, awsClient *conns.AWSClient, includeResource bool, result *list.ListResult, rd *schema.ResourceData) {
-	if err := l.runResultInterceptors(ctx, listresource.After, awsClient, rd); err != nil {
-		result.Diagnostics.Append(diag.NewErrorDiagnostic(
-			"Error Listing Remote Resources",
-			"An unexpected error occurred running result interceptors. "+
-				"This is always an error in the provider. "+
-				"Please report the following to the provider developer:\n\n"+
-				"Error: "+err.Error(),
-		))
+	if err := l.runResultInterceptors(ctx, listresource.After, awsClient, rd, includeResource); err.HasError() {
+		result.Diagnostics.Append(err...)
 		return
 	}
 
