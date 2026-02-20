@@ -125,9 +125,7 @@ func autoGenerateGoldenPath(t *testing.T, fullTestName, testCaseName string) str
 		baseName = before
 	}
 
-	// Convert TestExpandLogging_collections -> expand_logging_collections
-	cleanTestName := strings.TrimPrefix(baseName, "Test")
-	cleanTestName = camelToSnake(cleanTestName)
+	cleanTestName := normalizeTestName(baseName)
 
 	// Clean case name: first replace '*' with "pointer " to handle cases like "*struct" -> "pointer struct"
 	cleanCaseName := strings.ReplaceAll(testCaseName, "*", "pointer ")
@@ -143,6 +141,12 @@ func autoGenerateGoldenPath(t *testing.T, fullTestName, testCaseName string) str
 	// Build hierarchical path using filepath.Join for cross-OS compatibility
 	// Creates: autoflex/subdirectory/test_name/case_name.golden
 	return filepath.Join("autoflex", subdirectory, cleanTestName, cleanCaseName+".golden")
+}
+
+func normalizeTestName(name string) string {
+	// e.g. Convert TestExpandLogging_collections -> expand_logging_collections
+	name = strings.TrimPrefix(name, "Test")
+	return camelToSnake(name)
 }
 
 // determineSubdirectoryFromTestName determines the subdirectory based on which test file contains the test function.
