@@ -67,5 +67,5 @@ import {
 Using `terraform import`, import a static reverse DNS record to an Elastic IP addresses using their association IDs. For example:
 
 ```console
-% terraform import aws_eip_association.test eipassoc-ab12c345
+% terraform import aws_eip_domain_name.test eipassoc-ab12c345
 ```
