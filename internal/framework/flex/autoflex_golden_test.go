@@ -126,6 +126,18 @@ func autoGenerateGoldenPath(t testingiface.T, fullTestName, testCaseName string)
 
 	cleanTestName := normalizeTestName(baseName)
 
+	var cleanSubCases []string
+	if len(parts) > 2 {
+		var subCases []string
+		subCases = parts[1:]
+		subCases = subCases[:len(subCases)-1]
+		cleanSubCases = make([]string, len(subCases))
+
+		for i, subCase := range subCases {
+			cleanSubCases[i] = normalizeTestCaseName(subCase)
+		}
+	}
+
 	cleanCaseName := normalizeTestCaseName(testCaseName)
 
 	// Determine subdirectory from test function name
@@ -133,7 +145,10 @@ func autoGenerateGoldenPath(t testingiface.T, fullTestName, testCaseName string)
 
 	// Build hierarchical path using filepath.Join for cross-OS compatibility
 	// Creates: autoflex/subdirectory/test_name/case_name.golden
-	return filepath.Join("autoflex", subdirectory, cleanTestName, cleanCaseName+".golden")
+	pathParts := []string{"autoflex", subdirectory, cleanTestName}
+	pathParts = append(pathParts, cleanSubCases...)
+	pathParts = append(pathParts, cleanCaseName+".golden")
+	return filepath.Join(pathParts...)
 }
 
 func normalizeTestName(name string) string {

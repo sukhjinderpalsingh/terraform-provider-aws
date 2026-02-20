@@ -27,7 +27,7 @@ func TestGenerateGoldenPath(t *testing.T) {
 		},
 		"multiple levels": {
 			fullTestName: "TestRoot/Outer Test-Case/inner test case",
-			expectedPath: "autoflex/unknown/root/inner_test_case.golden",
+			expectedPath: "autoflex/unknown/root/outer_testcase/inner_test_case.golden",
 		},
 	}
 
