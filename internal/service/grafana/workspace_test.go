@@ -549,6 +549,10 @@ func testAccWorkspace_version(t *testing.T) {
 
 func testAccWorkspace_kmsKeyId(t *testing.T) {
 	ctx := acctest.Context(t)
+	if testing.Short() {
+		t.Skip("skipping long-running test in short mode")
+	}
+
 	var v awstypes.WorkspaceDescription
 	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	resourceName := "aws_grafana_workspace.test"
