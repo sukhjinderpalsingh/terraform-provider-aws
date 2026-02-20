@@ -37,3 +37,45 @@ func TestNormalizeTestName(t *testing.T) {
 		})
 	}
 }
+
+func TestNormalizeTestCaseName(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		testName string
+		expected string
+	}{
+		"star": {
+			testName: "*struct",
+			expected: "pointer_struct",
+		},
+		"with spaces": {
+			testName: "with a space",
+			expected: "with_a_space",
+		},
+		"with upper case": {
+			testName: "With Uppercase",
+			expected: "with_uppercase",
+		},
+		"with hyphen": {
+			testName: "with-hyphen",
+			expected: "withhyphen",
+		},
+		"with comma": {
+			testName: "with,comma",
+			expected: "withcomma",
+		},
+	}
+
+	for testName, testCase := range testCases {
+		t.Run(testName, func(t *testing.T) {
+			t.Parallel()
+
+			path := normalizeTestCaseName(testCase.testName)
+
+			if path != testCase.expected {
+				t.Errorf("Incorrect name %q, expected %q", path, testCase.expected)
+			}
+		})
+	}
+}

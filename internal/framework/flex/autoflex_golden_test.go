@@ -127,13 +127,7 @@ func autoGenerateGoldenPath(t *testing.T, fullTestName, testCaseName string) str
 
 	cleanTestName := normalizeTestName(baseName)
 
-	// Clean case name: first replace '*' with "pointer " to handle cases like "*struct" -> "pointer struct"
-	cleanCaseName := strings.ReplaceAll(testCaseName, "*", "pointer ")
-	// Then replace spaces with underscores and convert to lowercase
-	cleanCaseName = strings.ReplaceAll(cleanCaseName, " ", "_")
-	cleanCaseName = strings.ToLower(cleanCaseName)
-	// Remove special characters but keep underscores and alphanumeric
-	cleanCaseName = regexache.MustCompile(`[^a-z0-9_]`).ReplaceAllString(cleanCaseName, "")
+	cleanCaseName := normalizeTestCaseName(testCaseName)
 
 	// Determine subdirectory from test function name
 	subdirectory := determineSubdirectoryFromTestName(t, baseName)
@@ -147,6 +141,17 @@ func normalizeTestName(name string) string {
 	// e.g. Convert TestExpandLogging_collections -> expand_logging_collections
 	name = strings.TrimPrefix(name, "Test")
 	return camelToSnake(name)
+}
+
+func normalizeTestCaseName(name string) string {
+	// Clean case name: first replace '*' with "pointer " to handle cases like "*struct" -> "pointer_struct"
+	name = strings.ReplaceAll(name, "*", "pointer_")
+	// Then replace spaces with underscores and convert to lowercase
+	name = strings.ReplaceAll(name, " ", "_")
+	name = strings.ToLower(name)
+	// Remove special characters but keep underscores and alphanumeric
+	name = regexache.MustCompile(`[^a-z0-9_]`).ReplaceAllString(name, "")
+	return name
 }
 
 // determineSubdirectoryFromTestName determines the subdirectory based on which test file contains the test function.
