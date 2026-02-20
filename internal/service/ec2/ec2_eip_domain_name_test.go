@@ -44,10 +44,10 @@ func TestAccEC2EIPDomainName_basic(t *testing.T) {
 				ImportStateVerify: true,
 				ResourceName:      resourceName,
 				ImportStateVerifyIgnore: []string{
-					"domain_name",
+					names.AttrDomainName,
 				},
 				ImportStateCheck: acctest.ImportCheckResourceAttr(
-					"domain_name",
+					names.AttrDomainName,
 					// ptr_record used as domain_name when importing includes a trailing dot.
 					// Ignore the trailing dot when comparing to the config value.
 					strings.TrimSuffix(domain, ".")+".",
