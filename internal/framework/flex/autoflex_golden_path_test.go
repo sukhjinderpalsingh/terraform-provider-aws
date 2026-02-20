@@ -4,7 +4,6 @@
 package flex
 
 import (
-	"strings"
 	"testing"
 
 	testingiface "github.com/mitchellh/go-testing-interface"
@@ -19,7 +18,7 @@ func TestGenerateGoldenPath(t *testing.T) {
 	}{
 		"root test": {
 			fullTestName: "TestRoot",
-			expectedPath: "autoflex/unknown/root/testroot.golden",
+			expectedPath: "autoflex/unknown/root.golden",
 		},
 		"single level": {
 			fullTestName: "TestRoot/test case",
@@ -37,11 +36,7 @@ func TestGenerateGoldenPath(t *testing.T) {
 
 			fooT := &testingiface.RuntimeT{}
 
-			subtestName := testCase.fullTestName
-			if last := strings.LastIndex(subtestName, "/"); last > 0 {
-				subtestName = subtestName[last+1:]
-			}
-			path := autoGenerateGoldenPath(fooT, testCase.fullTestName, subtestName)
+			path := autoGenerateGoldenPath(fooT, testCase.fullTestName)
 
 			if path != testCase.expectedPath {
 				t.Errorf("Incorrect path %q, expected %q", path, testCase.expectedPath)
