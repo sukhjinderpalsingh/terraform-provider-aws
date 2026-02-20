@@ -140,6 +140,13 @@ func (r *eipDomainNameResource) Read(ctx context.Context, request resource.ReadR
 		return
 	}
 
+	data.ID = fwflex.StringToFramework(ctx, output.AllocationId)
+	// The AWS API does not return the DomainName attribute.
+	// Set it from the PTRRecord value when it is missing (for example, during import).
+	if data.DomainName.IsNull() {
+		data.DomainName = fwflex.StringToFramework(ctx, output.PtrRecord)
+	}
+
 	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
 }
 
