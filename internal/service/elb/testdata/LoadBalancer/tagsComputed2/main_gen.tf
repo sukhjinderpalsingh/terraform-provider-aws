@@ -8,7 +8,7 @@ resource "aws_elb" "test" {
   name = var.rName
 
   internal = true
-  subnets = aws_subnet.test[*].id
+  subnets  = aws_subnet.test[*].id
 
   listener {
     instance_port     = 8000
