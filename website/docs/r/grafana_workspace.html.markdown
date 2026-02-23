@@ -109,7 +109,6 @@ This resource exports the following attributes in addition to the arguments abov
 * `arn` - The Amazon Resource Name (ARN) of the Grafana workspace.
 * `endpoint` - The endpoint of the Grafana workspace.
 * `grafana_version` - The version of Grafana running on the workspace.
-* `kms_key_id` - The ID or ARN of the AWS KMS key for encrypting workspace data.
 * `tags_all` - Map of tags assigned to the resource, including those inherited from the provider [`default_tags` configuration block](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#default_tags-configuration-block).
 
 ## Import
