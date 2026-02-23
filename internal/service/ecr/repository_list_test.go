@@ -120,7 +120,7 @@ func TestAccECRRepository_List_includeResource(t *testing.T) {
 						tfquerycheck.KnownValueCheck(tfjsonpath.New("repository_url"), knownvalue.NotNull()),
 						tfquerycheck.KnownValueCheck(tfjsonpath.New("image_tag_mutability"), knownvalue.NotNull()),
 						tfquerycheck.KnownValueCheck(tfjsonpath.New("image_scanning_configuration"), knownvalue.NotNull()),
-						tfquerycheck.KnownValueCheck(tfjsonpath.New("encryption_configuration"), knownvalue.NotNull()),
+						tfquerycheck.KnownValueCheck(tfjsonpath.New(names.AttrEncryptionConfiguration), knownvalue.NotNull()),
 					}),
 				},
 			},
