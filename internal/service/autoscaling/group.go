@@ -1983,7 +1983,9 @@ func drainGroup(ctx context.Context, conn *autoscaling.Client, name string, inst
 		}
 	}
 
-	if _, err := waitGroupDrained(ctx, conn, name, timeout); err != nil {
+	if _, err := tfresource.RetryUntilEqual(ctx, timeout, 0, func(ctx context.Context) (int, error) {
+		return countGroupInstances(ctx, conn, name)
+	}); err != nil {
 		return fmt.Errorf("waiting for Auto Scaling Group (%s) drain: %w", name, err)
 	}
 
@@ -2035,7 +2037,9 @@ func drainWarmPool(ctx context.Context, conn *autoscaling.Client, name string, t
 		return fmt.Errorf("setting Auto Scaling Warm Pool (%s) capacity to 0: %w", name, err)
 	}
 
-	if _, err := waitWarmPoolDrained(ctx, conn, name, timeout); err != nil {
+	if _, err := tfresource.RetryUntilEqual(ctx, timeout, 0, func(ctx context.Context) (int, error) {
+		return countWarmPoolInstances(ctx, conn, name)
+	}); err != nil {
 		return fmt.Errorf("waiting for Auto Scaling Warm Pool (%s) drain: %w", name, err)
 	}
 
@@ -2156,6 +2160,16 @@ func findGroupByName(ctx context.Context, conn *autoscaling.Client, name string)
 	}
 
 	return output, nil
+}
+
+func countGroupInstances(ctx context.Context, conn *autoscaling.Client, name string) (int, error) {
+	output, err := findGroupByName(ctx, conn, name)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return len(output.Instances), nil
 }
 
 func findInstanceRefresh(ctx context.Context, conn *autoscaling.Client, input *autoscaling.DescribeInstanceRefreshesInput) (*awstypes.InstanceRefresh, error) {
@@ -2389,12 +2403,22 @@ func findWarmPool(ctx context.Context, conn *autoscaling.Client, input *autoscal
 	return output, nil
 }
 
-func findWarmPoolByName(ctx context.Context, conn *autoscaling.Client, name string) (*autoscaling.DescribeWarmPoolOutput, error) {
+func findWarmPoolByASGName(ctx context.Context, conn *autoscaling.Client, asgName string) (*autoscaling.DescribeWarmPoolOutput, error) {
 	input := autoscaling.DescribeWarmPoolInput{
-		AutoScalingGroupName: aws.String(name),
+		AutoScalingGroupName: aws.String(asgName),
 	}
 
 	return findWarmPool(ctx, conn, &input)
+}
+
+func countWarmPoolInstances(ctx context.Context, conn *autoscaling.Client, asgName string) (int, error) {
+	output, err := findWarmPoolByASGName(ctx, conn, asgName)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return len(output.Instances), nil
 }
 
 func statusGroupCapacity(conn *autoscaling.Client, elbconn *elasticloadbalancing.Client, elbv2conn *elasticloadbalancingv2.Client, name string, cb func(int, int) error, startTime time.Time, ignoreFailedScalingActivities bool) retry.StateRefreshFunc {
@@ -2502,22 +2526,6 @@ func statusGroupCapacity(conn *autoscaling.Client, elbconn *elasticloadbalancing
 	}
 }
 
-func statusGroupInstanceCount(conn *autoscaling.Client, name string) retry.StateRefreshFunc {
-	return func(ctx context.Context) (any, string, error) {
-		output, err := findGroupByName(ctx, conn, name)
-
-		if retry.NotFound(err) {
-			return nil, "", nil
-		}
-
-		if err != nil {
-			return nil, "", err
-		}
-
-		return output, strconv.Itoa(len(output.Instances)), nil
-	}
-}
-
 func statusInstanceRefresh(conn *autoscaling.Client, name, id string) retry.StateRefreshFunc {
 	return func(ctx context.Context) (any, string, error) {
 		input := autoscaling.DescribeInstanceRefreshesInput{
@@ -2541,7 +2549,7 @@ func statusInstanceRefresh(conn *autoscaling.Client, name, id string) retry.Stat
 
 func statusWarmPool(conn *autoscaling.Client, name string) retry.StateRefreshFunc {
 	return func(ctx context.Context) (any, string, error) {
-		output, err := findWarmPoolByName(ctx, conn, name)
+		output, err := findWarmPoolByASGName(ctx, conn, name)
 
 		if retry.NotFound(err) {
 			return nil, "", nil
@@ -2552,22 +2560,6 @@ func statusWarmPool(conn *autoscaling.Client, name string) retry.StateRefreshFun
 		}
 
 		return output.WarmPoolConfiguration, string(output.WarmPoolConfiguration.Status), nil
-	}
-}
-
-func statusWarmPoolInstanceCount(conn *autoscaling.Client, name string) retry.StateRefreshFunc {
-	return func(ctx context.Context) (any, string, error) {
-		output, err := findWarmPoolByName(ctx, conn, name)
-
-		if retry.NotFound(err) {
-			return nil, "", nil
-		}
-
-		if err != nil {
-			return nil, "", err
-		}
-
-		return output, strconv.Itoa(len(output.Instances)), nil
 	}
 }
 
@@ -2585,22 +2577,6 @@ func waitGroupCapacitySatisfied(ctx context.Context, conn *autoscaling.Client, e
 	}
 
 	return err
-}
-
-func waitGroupDrained(ctx context.Context, conn *autoscaling.Client, name string, timeout time.Duration) (*awstypes.AutoScalingGroup, error) {
-	stateConf := &retry.StateChangeConf{
-		Target:  []string{"0"},
-		Refresh: statusGroupInstanceCount(conn, name),
-		Timeout: timeout,
-	}
-
-	outputRaw, err := stateConf.WaitForStateContext(ctx)
-
-	if output, ok := outputRaw.(*awstypes.AutoScalingGroup); ok {
-		return output, err
-	}
-
-	return nil, err
 }
 
 const (
@@ -2651,22 +2627,6 @@ func waitWarmPoolDeleted(ctx context.Context, conn *autoscaling.Client, name str
 	outputRaw, err := stateConf.WaitForStateContext(ctx)
 
 	if output, ok := outputRaw.(*awstypes.WarmPoolConfiguration); ok {
-		return output, err
-	}
-
-	return nil, err
-}
-
-func waitWarmPoolDrained(ctx context.Context, conn *autoscaling.Client, name string, timeout time.Duration) (*autoscaling.DescribeWarmPoolOutput, error) {
-	stateConf := &retry.StateChangeConf{
-		Target:  []string{"0"},
-		Refresh: statusWarmPoolInstanceCount(conn, name),
-		Timeout: timeout,
-	}
-
-	outputRaw, err := stateConf.WaitForStateContext(ctx)
-
-	if output, ok := outputRaw.(*autoscaling.DescribeWarmPoolOutput); ok {
 		return output, err
 	}
 
