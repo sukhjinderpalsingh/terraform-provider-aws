@@ -364,7 +364,7 @@ The `metadata_configuration` block supports the following:
 * `allowed_request_headers` - (Optional) A set of HTTP headers that are allowed to be propagated from incoming client requests to the target. Maximum of 10 headers.
 * `allowed_response_headers` - (Optional) A set of HTTP headers that are allowed to be propagated from the target response back to the client. Maximum of 10 headers.
 
-~> **Note:** Header names must contain only alphanumeric characters, hyphens, and underscores. Certain headers are restricted and cannot be configured for propagation, including `Authorization`, `Content-Type`, `Host`, `Cookie`, and various security-related headers. Headers starting with `X-Amzn-` are prohibited except for `X-Amzn-Bedrock-AgentCore-Runtime-Custom-*` headers.
+~> **Note:** Header names must contain only alphanumeric characters, hyphens, and underscores. A large number of standard HTTP headers are restricted and cannot be configured for propagation, including authentication, content negotiation, caching, security, CORS, and connection management headers. Headers starting with `X-Amzn-` are prohibited except for `X-Amzn-Bedrock-AgentCore-Runtime-Custom-*` headers. These restrictions are enforced by schema validation. For the full list of restricted headers, see the [AWS documentation](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/gateway-headers.html).
 
 ### `target_configuration`
 

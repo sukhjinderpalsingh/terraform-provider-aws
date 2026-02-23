@@ -22,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	tfstringvalidator "github.com/hashicorp/terraform-provider-aws/internal/framework/validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -68,6 +69,151 @@ func jsonAttribute(conflictWith string) schema.StringAttribute {
 		Validators: []validator.String{
 			stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName(conflictWith)),
 		},
+	}
+}
+
+// headerNameValidators returns validators for HTTP header names in metadata_configuration.
+// Header names must contain only alphanumeric characters, hyphens, and underscores.
+// Certain restricted headers cannot be configured for propagation.
+// Headers starting with X-Amzn- are prohibited except X-Amzn-Bedrock-AgentCore-Runtime-Custom-*.
+// See: https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/gateway-headers.html
+func headerNameValidators() []validator.String {
+	return []validator.String{
+		stringvalidator.RegexMatches(
+			regexache.MustCompile(`^[a-zA-Z0-9_-]+$`),
+			"header names must contain only alphanumeric characters, hyphens, and underscores",
+		),
+		tfstringvalidator.NoneOfCaseInsensitive(restrictedHeaders()...),
+		tfstringvalidator.PrefixNoneOfCaseInsensitive(
+			[]string{"X-Amzn-"},
+			[]string{"X-Amzn-Bedrock-AgentCore-Runtime-Custom-"},
+		),
+	}
+}
+
+// restrictedHeaders returns the full list of restricted HTTP headers that cannot be
+// configured for propagation in metadata_configuration.
+func restrictedHeaders() []string {
+	return []string{
+		// Authentication & Authorization
+		"Authorization",
+		"Proxy-Authorization",
+		"WWW-Authenticate",
+		// Content Negotiation
+		"Accept",
+		"Accept-Charset",
+		"Accept-Encoding",
+		"Accept-Language",
+		// Content Headers
+		"Content-Type",
+		"Content-Length",
+		"Content-Encoding",
+		"Content-Language",
+		"Content-Location",
+		"Content-Range",
+		// Caching
+		"Cache-Control",
+		"ETag",
+		"Expires",
+		"If-Match",
+		"If-Modified-Since",
+		"If-None-Match",
+		"If-Range",
+		"If-Unmodified-Since",
+		"Last-Modified",
+		"Pragma",
+		"Vary",
+		// Connection Management
+		"Connection",
+		"Keep-Alive",
+		"Proxy-Connection",
+		"Upgrade",
+		// Request Context
+		"Host",
+		"User-Agent",
+		"Referer",
+		"From",
+		// Range Requests
+		"Range",
+		"Accept-Ranges",
+		// Transfer
+		"Transfer-Encoding",
+		"TE",
+		"Trailer",
+		// Response
+		"Server",
+		"Date",
+		"Location",
+		"Retry-After",
+		// Cookies
+		"Set-Cookie",
+		"Cookie",
+		// Security
+		"Content-Security-Policy",
+		"Content-Security-Policy-Report-Only",
+		"Strict-Transport-Security",
+		"X-Content-Type-Options",
+		"X-Frame-Options",
+		"X-XSS-Protection",
+		"Referrer-Policy",
+		"Permissions-Policy",
+		// Cross-Origin
+		"Cross-Origin-Embedder-Policy",
+		"Cross-Origin-Opener-Policy",
+		"Cross-Origin-Resource-Policy",
+		// CORS
+		"Access-Control-Allow-Origin",
+		"Access-Control-Allow-Methods",
+		"Access-Control-Allow-Headers",
+		"Access-Control-Allow-Credentials",
+		"Access-Control-Expose-Headers",
+		"Access-Control-Max-Age",
+		"Access-Control-Request-Method",
+		"Access-Control-Request-Headers",
+		"Origin",
+		// Client Hints
+		"Accept-CH",
+		"Accept-CH-Lifetime",
+		"DPR",
+		"Width",
+		"Viewport-Width",
+		"Downlink",
+		"ECT",
+		"RTT",
+		"Save-Data",
+		// Other Security
+		"Clear-Site-Data",
+		"Feature-Policy",
+		"Expect-CT",
+		"Public-Key-Pins",
+		"Public-Key-Pins-Report-Only",
+		// Proxy & Forwarding
+		"X-Forwarded-For",
+		"X-Forwarded-Host",
+		"X-Forwarded-Proto",
+		"X-Real-IP",
+		"X-Requested-With",
+		"X-CSRF-Token",
+		// CDN & Infrastructure
+		"CF-Ray",
+		"CF-Connecting-IP",
+		"X-Amz-Cf-Id",
+		"X-Cache",
+		"X-Served-By",
+		// HTTP/2 Pseudo-Headers
+		":method",
+		":path",
+		":scheme",
+		":authority",
+		":status",
+		// Misc
+		"Link",
+		// WebSocket
+		"Sec-WebSocket-Key",
+		"Sec-WebSocket-Accept",
+		"Sec-WebSocket-Version",
+		"Sec-WebSocket-Protocol",
+		"Sec-WebSocket-Extensions",
 	}
 }
 
@@ -519,6 +665,7 @@ func (r *gatewayTargetResource) Schema(ctx context.Context, request resource.Sch
 							Description: "A list of HTTP headers that are allowed to be propagated from incoming client requests to the target.",
 							Validators: []validator.Set{
 								setvalidator.SizeAtMost(10),
+								setvalidator.ValueStringsAre(headerNameValidators()...),
 							},
 						},
 						"allowed_response_headers": schema.SetAttribute{
@@ -527,6 +674,7 @@ func (r *gatewayTargetResource) Schema(ctx context.Context, request resource.Sch
 							Description: "A list of HTTP headers that are allowed to be propagated from the target response back to the client.",
 							Validators: []validator.Set{
 								setvalidator.SizeAtMost(10),
+								setvalidator.ValueStringsAre(headerNameValidators()...),
 							},
 						},
 					},
