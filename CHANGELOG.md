@@ -20,6 +20,7 @@ ENHANCEMENTS:
 BUG FIXES:
 
 * data-source/aws_dms_endpoint: Add missing `mongodb_settings.use_update_lookup` attribute to fix "invalid address to set" error ([#46616](https://github.com/hashicorp/terraform-provider-aws/issues/46616))
+* list-resource/aws_s3_object: Includes parent bucket in display name. ([#46596](https://github.com/hashicorp/terraform-provider-aws/issues/46596))
 * resource/aws_bedrockagentcore_gateway_target: Add `credential_provider_configuration.oauth.default_return_url` and `credential_provider_configuration.oauth.grant_type` arguments ([#46127](https://github.com/hashicorp/terraform-provider-aws/issues/46127))
 * resource/aws_bedrockagentcore_gateway_target: Retry IAM eventual consistency errors on Create ([#46127](https://github.com/hashicorp/terraform-provider-aws/issues/46127))
 * resource/aws_billing_view: Fix "inconsistent result after apply" errors caused by ordering of `data_filter_expression.dimensions.values` ([#46462](https://github.com/hashicorp/terraform-provider-aws/issues/46462))
