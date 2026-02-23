@@ -61,14 +61,24 @@ func (l *listResourceTaskDefinition) List(ctx context.Context, request list.List
 			rd.SetId(arnStr)
 			rd.Set(names.AttrARN, arnStr) //nolint:errcheck
 
+			taskDefinition, tags, err := findTaskDefinitionByFamilyOrARN(ctx, conn, arnStr)
+			if err != nil {
+				tflog.Error(ctx, "Reading ECS (Elastic Container) Task Definition", map[string]any{
+					names.AttrARN: arnStr,
+					"err":         err.Error(),
+				})
+				continue
+			}
+
 			tflog.Info(ctx, "Reading ECS (Elastic Container) Task Definition")
-			diags := resourceTaskDefinitionRead(ctx, rd, l.Meta())
+			diags := resourceTaskDefinitionFlatten(ctx, rd, taskDefinition, tags)
 			if diags.HasError() {
 				tflog.Error(ctx, "Reading ECS (Elastic Container) Task Definition", map[string]any{
 					"diags": sdkdiag.DiagnosticsString(diags),
 				})
 				continue
 			}
+
 			if rd.Id() == "" {
 				tflog.Warn(ctx, "Resource disappeared during listing, skipping")
 				continue
