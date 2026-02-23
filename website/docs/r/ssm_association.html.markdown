@@ -272,7 +272,7 @@ Output Location (`output_location`) is an S3 bucket where you want to store the 
 
 Targets specify what instance IDs or tags to apply the document to and has these keys:
 
-* `key` - (Required) User-defined criteria for sending commands that target managed nodes that meet the criteria. See the [AWS documentation](https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_Target.html) for the list of available keys. 
+* `key` - (Required) User-defined criteria for sending commands that target managed nodes that meet the criteria. See the [AWS documentation](https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_Target.html) for the list of available keys.
 * `values` - (Required) List of values that correspond to the specified `key`. See the [AWS documentation](https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_Target.html) for details.
 
 ## Attribute Reference
