@@ -178,7 +178,7 @@ func restrictedHeaders() []string {
 		"Width",
 		"Viewport-Width",
 		"Downlink",
-		"ECT",
+		"ECT", //nolint:misspell
 		"RTT",
 		"Save-Data",
 		// Other Security
