@@ -2530,6 +2530,10 @@ func TestAccLambdaFunction_Zip_validation(t *testing.T) {
 }
 
 func TestAccLambdaFunction_ipv6AllowedForDualStack(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping long-running test in short mode")
+	}
+
 	ctx := acctest.Context(t)
 	var conf lambda.GetFunctionOutput
 	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
