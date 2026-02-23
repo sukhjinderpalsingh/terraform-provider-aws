@@ -63,7 +63,12 @@ func (v *identity) Checks() func() map[string]knownvalue.Check {
 		checks := make(map[string]knownvalue.Check, len(v.values))
 
 		for k, val := range v.values {
-			checks[k] = knownvalue.StringExact(val.(string))
+			// add check for optional identities that may be nil
+			if val == nil {
+				checks[k] = knownvalue.Null()
+			} else {
+				checks[k] = knownvalue.StringExact(val.(string))
+			}
 		}
 
 		return checks
