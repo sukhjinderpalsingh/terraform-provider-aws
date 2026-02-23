@@ -1,5 +1,7 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
+
+// DONOTCOPY: Copying old resources spreads bad habits. Use skaff instead.
 
 package wafv2
 
@@ -510,7 +512,7 @@ func (r *resourceWebACLRuleGroupAssociation) Schema(ctx context.Context, req res
 			},
 			Blocks: map[string]schema.Block{
 				"action_to_use": schema.ListNestedBlock{
-					CustomType: fwtypes.NewListNestedObjectTypeOf[actionToUseModel](ctx),
+					CustomType: fwtypes.NewListNestedObjectTypeOf[ruleActionModel](ctx),
 					Validators: []validator.List{
 						listvalidator.SizeAtMost(1),
 						listvalidator.SizeAtLeast(1),
@@ -532,7 +534,7 @@ func (r *resourceWebACLRuleGroupAssociation) Schema(ctx context.Context, req res
 											NestedObject: schema.NestedBlockObject{
 												Blocks: map[string]schema.Block{
 													"insert_header": schema.ListNestedBlock{
-														CustomType: fwtypes.NewListNestedObjectTypeOf[insertHeaderModel](ctx),
+														CustomType: fwtypes.NewListNestedObjectTypeOf[customHTTPHeaderModel](ctx),
 														Validators: []validator.List{
 															listvalidator.SizeAtLeast(1),
 														},
@@ -588,7 +590,7 @@ func (r *resourceWebACLRuleGroupAssociation) Schema(ctx context.Context, req res
 												},
 												Blocks: map[string]schema.Block{
 													"response_header": schema.ListNestedBlock{
-														CustomType: fwtypes.NewListNestedObjectTypeOf[responseHeaderModel](ctx),
+														CustomType: fwtypes.NewListNestedObjectTypeOf[customHTTPHeaderModel](ctx),
 														NestedObject: schema.NestedBlockObject{
 															Attributes: map[string]schema.Attribute{
 																names.AttrName: schema.StringAttribute{
@@ -627,7 +629,7 @@ func (r *resourceWebACLRuleGroupAssociation) Schema(ctx context.Context, req res
 											NestedObject: schema.NestedBlockObject{
 												Blocks: map[string]schema.Block{
 													"insert_header": schema.ListNestedBlock{
-														CustomType: fwtypes.NewListNestedObjectTypeOf[insertHeaderModel](ctx),
+														CustomType: fwtypes.NewListNestedObjectTypeOf[customHTTPHeaderModel](ctx),
 														Validators: []validator.List{
 															listvalidator.SizeAtLeast(1),
 														},
@@ -669,7 +671,7 @@ func (r *resourceWebACLRuleGroupAssociation) Schema(ctx context.Context, req res
 											NestedObject: schema.NestedBlockObject{
 												Blocks: map[string]schema.Block{
 													"insert_header": schema.ListNestedBlock{
-														CustomType: fwtypes.NewListNestedObjectTypeOf[insertHeaderModel](ctx),
+														CustomType: fwtypes.NewListNestedObjectTypeOf[customHTTPHeaderModel](ctx),
 														Validators: []validator.List{
 															listvalidator.SizeAtLeast(1),
 														},
@@ -711,7 +713,7 @@ func (r *resourceWebACLRuleGroupAssociation) Schema(ctx context.Context, req res
 											NestedObject: schema.NestedBlockObject{
 												Blocks: map[string]schema.Block{
 													"insert_header": schema.ListNestedBlock{
-														CustomType: fwtypes.NewListNestedObjectTypeOf[insertHeaderModel](ctx),
+														CustomType: fwtypes.NewListNestedObjectTypeOf[customHTTPHeaderModel](ctx),
 														Validators: []validator.List{
 															listvalidator.SizeAtLeast(1),
 														},
@@ -1182,13 +1184,12 @@ func (r *resourceWebACLRuleGroupAssociation) Read(ctx context.Context, req resou
 
 	// Get the Web ACL and check if the rule group is associated
 	webACL, err := findWebACLByThreePartKey(ctx, conn, webACLID, webACLName, webACLScope)
+	if retry.NotFound(err) {
+		resp.Diagnostics.Append(fwdiag.NewResourceNotFoundWarningDiagnostic(err))
+		resp.State.RemoveResource(ctx)
+		return
+	}
 	if err != nil {
-		if retry.NotFound(err) {
-			resp.Diagnostics.Append(fwdiag.NewResourceNotFoundWarningDiagnostic(err))
-			resp.State.RemoveResource(ctx)
-			return
-		}
-
 		resp.Diagnostics.AddError(
 			"Reading WAFv2 Web ACL Rule Group Association",
 			fmt.Sprintf("Error reading Web ACL: %s", err),
@@ -1605,12 +1606,11 @@ func (r *resourceWebACLRuleGroupAssociation) Delete(ctx context.Context, req res
 
 	// Get the Web ACL
 	webACL, err := findWebACLByThreePartKey(ctx, conn, webACLID, webACLName, webACLScope)
+	if retry.NotFound(err) {
+		// Web ACL is already gone, nothing to do
+		return
+	}
 	if err != nil {
-		if retry.NotFound(err) {
-			// Web ACL is already gone, nothing to do
-			return
-		}
-
 		resp.Diagnostics.AddError(
 			create.ProblemStandardMessage(names.WAFV2, create.ErrActionDeleting, ResNameWebACLRuleGroupAssociation, state.RuleName.String(), err),
 			err.Error(),
@@ -1960,11 +1960,11 @@ type responseInspectionStatusCodeModel struct {
 }
 
 type ruleActionOverrideModel struct {
-	Name        types.String                                      `tfsdk:"name"`
-	ActionToUse fwtypes.ListNestedObjectValueOf[actionToUseModel] `tfsdk:"action_to_use"`
+	Name        types.String                                     `tfsdk:"name"`
+	ActionToUse fwtypes.ListNestedObjectValueOf[ruleActionModel] `tfsdk:"action_to_use"`
 }
 
-type actionToUseModel struct {
+type ruleActionModel struct {
 	Allow     fwtypes.ListNestedObjectValueOf[allowActionModel]     `tfsdk:"allow"`
 	Block     fwtypes.ListNestedObjectValueOf[blockActionModel]     `tfsdk:"block"`
 	Captcha   fwtypes.ListNestedObjectValueOf[captchaActionModel]   `tfsdk:"captcha"`
@@ -1993,21 +1993,16 @@ type countActionModel struct {
 }
 
 type customRequestHandlingModel struct {
-	InsertHeader fwtypes.ListNestedObjectValueOf[insertHeaderModel] `tfsdk:"insert_header"`
+	InsertHeader fwtypes.ListNestedObjectValueOf[customHTTPHeaderModel] `tfsdk:"insert_header"`
 }
 
 type customResponseModel struct {
-	CustomResponseBodyKey types.String                                         `tfsdk:"custom_response_body_key"`
-	ResponseCode          types.Int32                                          `tfsdk:"response_code"`
-	ResponseHeader        fwtypes.ListNestedObjectValueOf[responseHeaderModel] `tfsdk:"response_header"`
+	CustomResponseBodyKey types.String                                           `tfsdk:"custom_response_body_key"`
+	ResponseCode          types.Int32                                            `tfsdk:"response_code"`
+	ResponseHeader        fwtypes.ListNestedObjectValueOf[customHTTPHeaderModel] `tfsdk:"response_header"`
 }
 
-type insertHeaderModel struct {
-	Name  types.String `tfsdk:"name"`
-	Value types.String `tfsdk:"value"`
-}
-
-type responseHeaderModel struct {
+type customHTTPHeaderModel struct {
 	Name  types.String `tfsdk:"name"`
 	Value types.String `tfsdk:"value"`
 }

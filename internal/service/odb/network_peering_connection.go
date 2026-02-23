@@ -1,5 +1,7 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
+
+// DONOTCOPY: Copying old resources spreads bad habits. Use skaff instead.
 
 package odb
 
@@ -18,10 +20,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float32planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	sdkretry "github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-provider-aws/internal/create"
 	"github.com/hashicorp/terraform-provider-aws/internal/enum"
 	"github.com/hashicorp/terraform-provider-aws/internal/errs"
@@ -29,6 +32,7 @@ import (
 	"github.com/hashicorp/terraform-provider-aws/internal/framework"
 	"github.com/hashicorp/terraform-provider-aws/internal/framework/flex"
 	fwtypes "github.com/hashicorp/terraform-provider-aws/internal/framework/types"
+	"github.com/hashicorp/terraform-provider-aws/internal/retry"
 	tftags "github.com/hashicorp/terraform-provider-aws/internal/tags"
 	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
 	"github.com/hashicorp/terraform-provider-aws/names"
@@ -66,9 +70,11 @@ func (r *resourceNetworkPeeringConnection) Schema(ctx context.Context, req resou
 			names.AttrARN: framework.ARNAttributeComputedOnly(),
 			names.AttrID:  framework.IDAttribute(),
 			"odb_network_id": schema.StringAttribute{
-				Required: true,
+				Optional: true,
+				Computed: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+					stringplanmodifier.UseStateForUnknown(),
 				},
 				Description: "Required field. The unique identifier of the ODB network that initiates the peering connection. " +
 					"A sample ID is odbpcx-abcdefgh12345678. Changing this will force terraform to create new resource.",
@@ -93,33 +99,56 @@ func (r *resourceNetworkPeeringConnection) Schema(ctx context.Context, req resou
 				Description: "Status of the odb network peering connection.",
 				CustomType:  fwtypes.StringEnumType[odbtypes.ResourceStatus](),
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			names.AttrStatusReason: schema.StringAttribute{
 				Description: "The reason for the current status of the ODB peering connection..",
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"odb_network_arn": schema.StringAttribute{
 				Description: "ARN of the odb network peering connection.",
+				Optional:    true,
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplaceIfConfigured(),
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"peer_network_arn": schema.StringAttribute{
 				Description: "ARN of the peer network peering connection.",
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"odb_peering_connection_type": schema.StringAttribute{
 				Description: "Type of the odb peering connection.",
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			names.AttrCreatedAt: schema.StringAttribute{
 				Description: "Created time of the odb network peering connection.",
 				Computed:    true,
 				CustomType:  timetypes.RFC3339Type{},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"percent_progress": schema.Float32Attribute{
 				Description: "Progress of the odb network peering connection.",
 				Computed:    true,
+				PlanModifiers: []planmodifier.Float32{
+					float32planmodifier.UseStateForUnknown(),
+				},
 			},
 			names.AttrTags:    tftags.TagsAttribute(),
 			names.AttrTagsAll: tftags.TagsAttributeComputedOnly(),
@@ -134,6 +163,34 @@ func (r *resourceNetworkPeeringConnection) Schema(ctx context.Context, req resou
 	}
 }
 
+func (r *resourceNetworkPeeringConnection) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data odbNetworkPeeringConnectionResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	//Neither is present
+	if data.OdbNetworkId.IsNull() && data.OdbNetworkArn.IsNull() {
+		err := errors.New("either odb_network_id or odb_network_arn must be present. Neither is present.")
+		resp.Diagnostics.AddError(
+			create.ProblemStandardMessage(names.ODB, create.ErrActionCreating, ResNameNetworkPeeringConnection, data.DisplayName.String(), err),
+			err.Error(),
+		)
+		return
+	}
+
+	//Both are present
+	if !data.OdbNetworkId.IsNull() && !data.OdbNetworkArn.IsNull() {
+		err := errors.New("either odb_network_id or odb_network_arn must be present. Both are present.")
+		resp.Diagnostics.AddError(
+			create.ProblemStandardMessage(names.ODB, create.ErrActionCreating, ResNameNetworkPeeringConnection, data.DisplayName.String(), err),
+			err.Error(),
+		)
+		return
+	}
+}
+
 func (r *resourceNetworkPeeringConnection) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	conn := r.Meta().ODBClient(ctx)
 	var plan odbNetworkPeeringConnectionResourceModel
@@ -141,8 +198,14 @@ func (r *resourceNetworkPeeringConnection) Create(ctx context.Context, req resou
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	odbNetwork := plan.OdbNetworkArn
+	if odbNetwork.IsNull() || odbNetwork.IsUnknown() {
+		odbNetwork = plan.OdbNetworkId
+	}
+
 	input := odb.CreateOdbPeeringConnectionInput{
-		OdbNetworkId:  plan.OdbNetworkId.ValueStringPointer(),
+		OdbNetworkId:  odbNetwork.ValueStringPointer(),
 		PeerNetworkId: plan.PeerNetworkId.ValueStringPointer(),
 		DisplayName:   plan.DisplayName.ValueStringPointer(),
 		Tags:          getTagsIn(ctx),
@@ -211,7 +274,7 @@ func (r *resourceNetworkPeeringConnection) Read(ctx context.Context, req resourc
 	}
 
 	out, err := findNetworkPeeringConnectionByID(ctx, conn, state.OdbPeeringConnectionId.ValueString())
-	if tfresource.NotFound(err) {
+	if retry.NotFound(err) {
 		resp.Diagnostics.Append(fwdiag.NewResourceNotFoundWarningDiagnostic(err))
 		resp.State.RemoveResource(ctx)
 		return
@@ -286,7 +349,7 @@ func (r *resourceNetworkPeeringConnection) Delete(ctx context.Context, req resou
 }
 
 func waitNetworkPeeringConnectionCreated(ctx context.Context, conn *odb.Client, id string, timeout time.Duration) (*odbtypes.OdbPeeringConnection, error) {
-	stateConf := &retry.StateChangeConf{
+	stateConf := &sdkretry.StateChangeConf{
 		Pending:                   enum.Slice(odbtypes.ResourceStatusProvisioning),
 		Target:                    enum.Slice(odbtypes.ResourceStatusAvailable, odbtypes.ResourceStatusFailed),
 		Refresh:                   statusNetworkPeeringConnection(ctx, conn, id),
@@ -304,7 +367,7 @@ func waitNetworkPeeringConnectionCreated(ctx context.Context, conn *odb.Client, 
 }
 
 func waitNetworkPeeringConnectionDeleted(ctx context.Context, conn *odb.Client, id string, timeout time.Duration) (*odbtypes.OdbPeeringConnection, error) {
-	stateConf := &retry.StateChangeConf{
+	stateConf := &sdkretry.StateChangeConf{
 		Pending: enum.Slice(odbtypes.ResourceStatusTerminating),
 		Target:  []string{},
 		Refresh: statusNetworkPeeringConnection(ctx, conn, id),
@@ -318,10 +381,10 @@ func waitNetworkPeeringConnectionDeleted(ctx context.Context, conn *odb.Client, 
 	return nil, err
 }
 
-func statusNetworkPeeringConnection(ctx context.Context, conn *odb.Client, id string) retry.StateRefreshFunc {
+func statusNetworkPeeringConnection(ctx context.Context, conn *odb.Client, id string) sdkretry.StateRefreshFunc {
 	return func() (any, string, error) {
 		out, err := findNetworkPeeringConnectionByID(ctx, conn, id)
-		if tfresource.NotFound(err) {
+		if retry.NotFound(err) {
 			return nil, "", nil
 		}
 		if err != nil {
@@ -339,7 +402,7 @@ func findNetworkPeeringConnectionByID(ctx context.Context, conn *odb.Client, id 
 	out, err := conn.GetOdbPeeringConnection(ctx, &input)
 	if err != nil {
 		if errs.IsA[*odbtypes.ResourceNotFoundException](err) {
-			return nil, &retry.NotFoundError{
+			return nil, &sdkretry.NotFoundError{
 				LastError:   err,
 				LastRequest: &input,
 			}
@@ -349,7 +412,7 @@ func findNetworkPeeringConnectionByID(ctx context.Context, conn *odb.Client, id 
 	}
 
 	if out == nil || out.OdbPeeringConnection == nil {
-		return nil, tfresource.NewEmptyResultError(&input)
+		return nil, tfresource.NewEmptyResultError()
 	}
 
 	return out.OdbPeeringConnection, nil
