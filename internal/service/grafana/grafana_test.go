@@ -38,7 +38,7 @@ func TestAccGrafana_serial(t *testing.T) {
 			"configuration":            testAccWorkspace_configuration,
 			"networkAccess":            testAccWorkspace_networkAccess,
 			"version":                  testAccWorkspace_version,
-			"kmsKeyId":                 testAccWorkspace_kmsKeyId,
+			"kmsKeyId":                 testAccWorkspace_kmsKeyID,
 		},
 		"ApiKey": {
 			acctest.CtBasic: testAccWorkspaceAPIKey_basic,

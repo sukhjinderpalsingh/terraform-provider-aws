@@ -7,10 +7,8 @@ package grafana
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-aws/internal/conns"
@@ -117,7 +115,8 @@ func dataSourceWorkspace() *schema.Resource {
 
 func dataSourceWorkspaceRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
-	conn := meta.(*conns.AWSClient).GrafanaClient(ctx)
+	c := meta.(*conns.AWSClient)
+	conn := c.GrafanaClient(ctx)
 
 	workspaceID := d.Get("workspace_id").(string)
 	workspace, err := findWorkspaceByID(ctx, conn, workspaceID)
@@ -128,15 +127,7 @@ func dataSourceWorkspaceRead(ctx context.Context, d *schema.ResourceData, meta a
 
 	d.SetId(workspaceID)
 	d.Set("account_access_type", workspace.AccountAccessType)
-	// https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonmanagedgrafana.html#amazonmanagedgrafana-resources-for-iam-policies.
-	workspaceARN := arn.ARN{
-		Partition: meta.(*conns.AWSClient).Partition(ctx),
-		Service:   "grafana",
-		Region:    meta.(*conns.AWSClient).Region(ctx),
-		AccountID: meta.(*conns.AWSClient).AccountID(ctx),
-		Resource:  fmt.Sprintf("/workspaces/%s", d.Id()),
-	}.String()
-	d.Set(names.AttrARN, workspaceARN)
+	d.Set(names.AttrARN, workspaceARN(ctx, c, d.Id()))
 	d.Set("authentication_providers", workspace.Authentication.Providers)
 	d.Set(names.AttrCreatedDate, workspace.Created.Format(time.RFC3339))
 	d.Set("data_sources", workspace.DataSources)

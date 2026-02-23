@@ -547,12 +547,8 @@ func testAccWorkspace_version(t *testing.T) {
 	})
 }
 
-func testAccWorkspace_kmsKeyId(t *testing.T) {
+func testAccWorkspace_kmsKeyID(t *testing.T) {
 	ctx := acctest.Context(t)
-	if testing.Short() {
-		t.Skip("skipping long-running test in short mode")
-	}
-
 	var v awstypes.WorkspaceDescription
 	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	resourceName := "aws_grafana_workspace.test"
@@ -565,7 +561,7 @@ func testAccWorkspace_kmsKeyId(t *testing.T) {
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccWorkspaceConfig_kmsKeyId(rName),
+				Config: testAccWorkspaceConfig_kmsKeyID(rName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckWorkspaceExists(ctx, t, resourceName, &v),
 					resource.TestCheckResourceAttrPair(resourceName, names.AttrKMSKeyID, kmsKeyResourceName, names.AttrARN),
@@ -935,7 +931,7 @@ resource "aws_grafana_workspace" "test" {
 `, version))
 }
 
-func testAccWorkspaceConfig_kmsKeyId(rName string) string {
+func testAccWorkspaceConfig_kmsKeyID(rName string) string {
 	return acctest.ConfigCompose(testAccWorkspaceConfig_base(rName), fmt.Sprintf(`
 resource "aws_kms_key" "test" {
   description             = %[1]q
