@@ -1275,33 +1275,9 @@ func (r *resourceWebACLRuleGroupAssociation) Read(ctx context.Context, req resou
 
 							var managedRuleGroupConfigs fwtypes.ListNestedObjectValueOf[managedRuleGroupConfigModel]
 							if len(managedStmt.ManagedRuleGroupConfigs) > 0 {
-								sdkManagedRuleGroupConfigs := managedStmt.ManagedRuleGroupConfigs[0]
-
-								if acfp := sdkManagedRuleGroupConfigs.AWSManagedRulesACFPRuleSet; acfp != nil {
-									var diags diag.Diagnostics
-									managedRuleGroupConfigs, diags = flattenACFPRuleConfig(ctx, acfp, managedStmt.ManagedRuleGroupConfigs)
-									resp.Diagnostics.Append(diags...)
-									if resp.Diagnostics.HasError() {
-										return
-									}
-								} else {
-									resp.Diagnostics.Append(fwflex.Flatten(ctx, managedStmt.ManagedRuleGroupConfigs, &managedRuleGroupConfigs)...)
-									if resp.Diagnostics.HasError() {
-										return
-									}
-
-									if botControl := sdkManagedRuleGroupConfigs.AWSManagedRulesBotControlRuleSet; botControl != nil {
-										var tfManagedRuleGroupConfigModel managedRuleGroupConfigModel
-										resp.Diagnostics.Append(managedRuleGroupConfigs.Elements()[0].(fwtypes.ObjectValueOf[managedRuleGroupConfigModel]).As(ctx, &tfManagedRuleGroupConfigModel, basetypes.ObjectAsOptions{})...)
-										if resp.Diagnostics.HasError() {
-											return
-										}
-										resp.Diagnostics.Append(fwflex.Flatten(ctx, botControl, &tfManagedRuleGroupConfigModel.AWSManagedRulesBotControlRuleSet)...)
-										if resp.Diagnostics.HasError() {
-											return
-										}
-										managedRuleGroupConfigs = fwtypes.NewListNestedObjectValueOfSliceMust(ctx, []*managedRuleGroupConfigModel{&tfManagedRuleGroupConfigModel})
-									}
+								resp.Diagnostics.Append(fwflex.Flatten(ctx, managedStmt.ManagedRuleGroupConfigs, &managedRuleGroupConfigs)...)
+								if resp.Diagnostics.HasError() {
+									return
 								}
 							} else {
 								managedRuleGroupConfigs = fwtypes.NewListNestedObjectValueOfNull[managedRuleGroupConfigModel](ctx)
@@ -1860,8 +1836,15 @@ func (m *awsManagedRulesBotControlRuleSetModel) Flatten(ctx context.Context, v a
 		} else {
 			m.EnableMachineLearning = fwflex.BoolToFramework(ctx, val.EnableMachineLearning)
 		}
+	case awstypes.AWSManagedRulesBotControlRuleSet:
+		m.InspectionLevel = types.StringValue(string(val.InspectionLevel))
+		if val.InspectionLevel == awstypes.InspectionLevelCommon && (val.EnableMachineLearning == nil || !*val.EnableMachineLearning) {
+			m.EnableMachineLearning = types.BoolValue(false)
+		} else {
+			m.EnableMachineLearning = fwflex.BoolToFramework(ctx, val.EnableMachineLearning)
+		}
 	default:
-		diags.AddError("Unexpected type", fmt.Sprintf("expected *awstypes.AWSManagedRulesBotControlRuleSet, got %T", v))
+		diags.AddError("Unexpected type", fmt.Sprintf("expected awstypes.AWSManagedRulesBotControlRuleSet, got %T", v))
 	}
 	return diags
 }
@@ -1945,8 +1928,89 @@ func (m awsManagedRulesACFPRuleSetModel) Expand(ctx context.Context) (result any
 }
 
 var (
-	_ fwflex.Expander = requestInspectionACFPModel{}
+	_ fwflex.Expander  = awsManagedRulesACFPRuleSetModel{}
+	_ fwflex.Flattener = &awsManagedRulesACFPRuleSetModel{}
+	_ fwflex.Expander  = requestInspectionACFPModel{}
+	_ fwflex.Flattener = &requestInspectionACFPModel{}
 )
+
+func (m *requestInspectionACFPModel) Flatten(ctx context.Context, v any) (diags diag.Diagnostics) {
+	switch val := v.(type) {
+	case *awstypes.RequestInspectionACFP:
+		m.PayloadType = types.StringValue(string(val.PayloadType))
+		diags.Append(fwflex.Flatten(ctx, val.EmailField, &m.EmailField)...)
+		diags.Append(fwflex.Flatten(ctx, val.PasswordField, &m.PasswordField)...)
+		diags.Append(fwflex.Flatten(ctx, val.UsernameField, &m.UsernameField)...)
+
+		if len(val.AddressFields) > 0 {
+			var identifiers []attr.Value
+			for _, af := range val.AddressFields {
+				identifiers = append(identifiers, types.StringValue(aws.ToString(af.Identifier)))
+			}
+			m.AddressFields = fwtypes.NewListNestedObjectValueOfSliceMust(ctx, []*addressFieldModel{{
+				Identifiers: fwtypes.NewListValueOfMust[types.String](ctx, identifiers),
+			}})
+		}
+
+		if len(val.PhoneNumberFields) > 0 {
+			var identifiers []attr.Value
+			for _, pf := range val.PhoneNumberFields {
+				identifiers = append(identifiers, types.StringValue(aws.ToString(pf.Identifier)))
+			}
+			m.PhoneNumberFields = fwtypes.NewListNestedObjectValueOfSliceMust(ctx, []*phoneNumberFieldModel{{
+				Identifiers: fwtypes.NewListValueOfMust[types.String](ctx, identifiers),
+			}})
+		}
+	case awstypes.RequestInspectionACFP:
+		m.PayloadType = types.StringValue(string(val.PayloadType))
+		diags.Append(fwflex.Flatten(ctx, val.EmailField, &m.EmailField)...)
+		diags.Append(fwflex.Flatten(ctx, val.PasswordField, &m.PasswordField)...)
+		diags.Append(fwflex.Flatten(ctx, val.UsernameField, &m.UsernameField)...)
+
+		if len(val.AddressFields) > 0 {
+			var identifiers []attr.Value
+			for _, af := range val.AddressFields {
+				identifiers = append(identifiers, types.StringValue(aws.ToString(af.Identifier)))
+			}
+			m.AddressFields = fwtypes.NewListNestedObjectValueOfSliceMust(ctx, []*addressFieldModel{{
+				Identifiers: fwtypes.NewListValueOfMust[types.String](ctx, identifiers),
+			}})
+		}
+
+		if len(val.PhoneNumberFields) > 0 {
+			var identifiers []attr.Value
+			for _, pf := range val.PhoneNumberFields {
+				identifiers = append(identifiers, types.StringValue(aws.ToString(pf.Identifier)))
+			}
+			m.PhoneNumberFields = fwtypes.NewListNestedObjectValueOfSliceMust(ctx, []*phoneNumberFieldModel{{
+				Identifiers: fwtypes.NewListValueOfMust[types.String](ctx, identifiers),
+			}})
+		}
+	default:
+		diags.AddError("Unexpected type", fmt.Sprintf("expected *awstypes.RequestInspectionACFP, got %T", v))
+	}
+	return diags
+}
+
+func (m *awsManagedRulesACFPRuleSetModel) Flatten(ctx context.Context, v any) (diags diag.Diagnostics) {
+	switch val := v.(type) {
+	case *awstypes.AWSManagedRulesACFPRuleSet:
+		m.CreationPath = fwflex.StringToFramework(ctx, val.CreationPath)
+		m.RegistrationPagePath = fwflex.StringToFramework(ctx, val.RegistrationPagePath)
+		m.EnableRegexInPath = types.BoolValue(val.EnableRegexInPath)
+		m.ResponseInspection = fwtypes.NewListNestedObjectValueOfNull[responseInspectionModel](ctx)
+		diags.Append(fwflex.Flatten(ctx, val.RequestInspection, &m.RequestInspection)...)
+	case awstypes.AWSManagedRulesACFPRuleSet:
+		m.CreationPath = fwflex.StringToFramework(ctx, val.CreationPath)
+		m.RegistrationPagePath = fwflex.StringToFramework(ctx, val.RegistrationPagePath)
+		m.EnableRegexInPath = types.BoolValue(val.EnableRegexInPath)
+		m.ResponseInspection = fwtypes.NewListNestedObjectValueOfNull[responseInspectionModel](ctx)
+		diags.Append(fwflex.Flatten(ctx, val.RequestInspection, &m.RequestInspection)...)
+	default:
+		diags.AddError("Unexpected type", fmt.Sprintf("expected *awstypes.AWSManagedRulesACFPRuleSet, got %T", v))
+	}
+	return diags
+}
 
 type requestInspectionACFPModel struct {
 	PayloadType       types.String                                           `tfsdk:"payload_type"`
@@ -2001,6 +2065,8 @@ type phoneNumberFieldModel struct {
 	Identifiers fwtypes.ListValueOf[types.String] `tfsdk:"identifiers"`
 }
 
+var _ fwflex.Expander = phoneNumberFieldModel{}
+
 func (m phoneNumberFieldModel) Expand(ctx context.Context) (result any, diags diag.Diagnostics) {
 	var phoneNumberFields []awstypes.PhoneNumberField
 
@@ -2020,6 +2086,8 @@ type emailFieldModel struct {
 type addressFieldModel struct {
 	Identifiers fwtypes.ListValueOf[types.String] `tfsdk:"identifiers"`
 }
+
+var _ fwflex.Expander = addressFieldModel{}
 
 func (m addressFieldModel) Expand(ctx context.Context) (result any, diags diag.Diagnostics) {
 	var addressFields []awstypes.AddressField
@@ -2108,70 +2176,4 @@ type customResponseModel struct {
 type customHTTPHeaderModel struct {
 	Name  types.String `tfsdk:"name"`
 	Value types.String `tfsdk:"value"`
-}
-
-func flattenACFPRuleConfig(ctx context.Context, acfp *awstypes.AWSManagedRulesACFPRuleSet, managedRuleGroupConfigs []awstypes.ManagedRuleGroupConfig) (fwtypes.ListNestedObjectValueOf[managedRuleGroupConfigModel], diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if acfp.RequestInspection == nil {
-		// autoflex is possible
-		var tfManagedRuleGroupConfigModel managedRuleGroupConfigModel
-		diags.Append(fwflex.Flatten(ctx, managedRuleGroupConfigs, &tfManagedRuleGroupConfigModel)...)
-		return fwtypes.NewListNestedObjectValueOfSliceMust(ctx, []*managedRuleGroupConfigModel{&tfManagedRuleGroupConfigModel}), diags
-	}
-
-	requestInspection := acfp.RequestInspection
-	var emailField emailFieldModel
-	var usernameField usernameFieldModel
-	var passwordField passwordFieldModel
-
-	fwflex.Flatten(ctx, requestInspection.EmailField, &emailField)
-	fwflex.Flatten(ctx, requestInspection.UsernameField, &usernameField)
-	fwflex.Flatten(ctx, requestInspection.PasswordField, &passwordField)
-
-	var addrList []attr.Value
-	for _, af := range requestInspection.AddressFields {
-		addrList = append(addrList, types.StringValue(aws.ToString(af.Identifier)))
-	}
-	ids := fwtypes.NewListValueOfMust[types.String](ctx, addrList)
-	afModel := &addressFieldModel{
-		Identifiers: ids,
-	}
-
-	var phoneList []attr.Value
-	for _, pf := range requestInspection.PhoneNumberFields {
-		phoneList = append(phoneList, types.StringValue(aws.ToString(pf.Identifier)))
-	}
-	pfModel := &phoneNumberFieldModel{
-		Identifiers: fwtypes.NewListValueOfMust[types.String](ctx, phoneList),
-	}
-
-	tfRequestInspection := &requestInspectionACFPModel{
-		PayloadType:       types.StringValue(string(requestInspection.PayloadType)),
-		EmailField:        fwtypes.NewListNestedObjectValueOfSliceMust(ctx, []*emailFieldModel{&emailField}),
-		UsernameField:     fwtypes.NewListNestedObjectValueOfSliceMust(ctx, []*usernameFieldModel{&usernameField}),
-		PasswordField:     fwtypes.NewListNestedObjectValueOfSliceMust(ctx, []*passwordFieldModel{&passwordField}),
-		AddressFields:     fwtypes.NewListNestedObjectValueOfSliceMust(ctx, []*addressFieldModel{afModel}),
-		PhoneNumberFields: fwtypes.NewListNestedObjectValueOfSliceMust(ctx, []*phoneNumberFieldModel{pfModel}),
-	}
-
-	tfACFPModel := &awsManagedRulesACFPRuleSetModel{
-		CreationPath:         types.StringValue(aws.ToString(acfp.CreationPath)),
-		RegistrationPagePath: types.StringValue(aws.ToString(acfp.RegistrationPagePath)),
-		EnableRegexInPath:    types.BoolValue(acfp.EnableRegexInPath),
-		ResponseInspection:   fwtypes.NewListNestedObjectValueOfNull[responseInspectionModel](ctx),
-		RequestInspection:    fwtypes.NewListNestedObjectValueOfSliceMust(ctx, []*requestInspectionACFPModel{tfRequestInspection}),
-	}
-
-	patchedRuleGroupConfig := make([]*managedRuleGroupConfigModel, 0, 1)
-
-	tfManagedRuleGroupConfigModel := &managedRuleGroupConfigModel{
-		AWSManagedRulesACFPRuleSet:       fwtypes.NewListNestedObjectValueOfSliceMust(ctx, []*awsManagedRulesACFPRuleSetModel{tfACFPModel}),
-		AWSManagedRulesATPRuleSet:        fwtypes.NewListNestedObjectValueOfNull[awsManagedRulesATPRuleSetModel](ctx),
-		AWSManagedRulesBotControlRuleSet: fwtypes.NewListNestedObjectValueOfNull[awsManagedRulesBotControlRuleSetModel](ctx),
-		AWSManagedRulesAntiDDoSRuleSet:   fwtypes.NewListNestedObjectValueOfNull[awsManagedRulesAntiDDoSRuleSetModel](ctx),
-	}
-	patchedRuleGroupConfig = append(patchedRuleGroupConfig, tfManagedRuleGroupConfigModel)
-
-	return fwtypes.NewListNestedObjectValueOfSliceMust(ctx, patchedRuleGroupConfig), diags
 }
