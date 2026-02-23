@@ -19,7 +19,6 @@ import (
 	"github.com/hashicorp/terraform-provider-aws/names"
 )
 
-// Function annotations are used for list resource registration to the Provider. DO NOT EDIT.
 // @SDKListResource("aws_ecs_task_definition")
 func newTaskDefinitionResourceAsListResource() inttypes.ListResourceForSDK {
 	l := listResourceTaskDefinition{}
