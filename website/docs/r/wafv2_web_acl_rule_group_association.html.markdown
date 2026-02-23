@@ -437,7 +437,7 @@ Exactly one of the following action blocks must be specified:
 * `identifier` - (Required) Identifier for the value to match against in the JSON.
 * `success_strings` - (Required) Strings in the body of the response that indicate a successful login attempt.
 
-### `status_code` Block
+### status_code
 
 * `success_codes` (Required) Status codes in the response that indicate a successful login attempt.
 * `failure_codes` (Required) Status codes in the response that indicate a failed login attempt.
