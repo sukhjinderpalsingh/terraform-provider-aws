@@ -10,12 +10,10 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/wafv2"
-	sdkacctest "github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-provider-aws/internal/acctest"
-	"github.com/hashicorp/terraform-provider-aws/internal/conns"
 	"github.com/hashicorp/terraform-provider-aws/internal/retry"
 	tfwafv2 "github.com/hashicorp/terraform-provider-aws/internal/service/wafv2"
 	"github.com/hashicorp/terraform-provider-aws/names"
@@ -138,21 +136,21 @@ func TestParseWebACLARN(t *testing.T) {
 func TestAccWAFV2WebACLRuleGroupAssociation_basic(t *testing.T) {
 	ctx := acctest.Context(t)
 	var v wafv2.GetWebACLOutput
-	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	resourceName := "aws_wafv2_web_acl_rule_group_association.test"
 	webACLResourceName := "aws_wafv2_web_acl.test"
 	ruleGroupResourceName := "aws_wafv2_rule_group.test"
 
-	resource.ParallelTest(t, resource.TestCase{
+	acctest.ParallelTest(ctx, t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.WAFV2ServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx),
+		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccWebACLRuleGroupAssociationConfig_RuleGroupReference_basic(rName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebACLRuleGroupAssociationExists(ctx, resourceName, &v),
+					testAccCheckWebACLRuleGroupAssociationExists(ctx, t, resourceName, &v),
 					resource.TestCheckResourceAttr(resourceName, "rule_name", fmt.Sprintf("%s-association", rName)),
 					resource.TestCheckResourceAttr(resourceName, names.AttrPriority, "10"),
 					resource.TestCheckResourceAttr(resourceName, "override_action", "none"),
@@ -174,19 +172,19 @@ func TestAccWAFV2WebACLRuleGroupAssociation_basic(t *testing.T) {
 func TestAccWAFV2WebACLRuleGroupAssociation_disappears(t *testing.T) {
 	ctx := acctest.Context(t)
 	var v wafv2.GetWebACLOutput
-	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	resourceName := "aws_wafv2_web_acl_rule_group_association.test"
 
-	resource.ParallelTest(t, resource.TestCase{
+	acctest.ParallelTest(ctx, t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.WAFV2ServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx),
+		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccWebACLRuleGroupAssociationConfig_RuleGroupReference_basic(rName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebACLRuleGroupAssociationExists(ctx, resourceName, &v),
+					testAccCheckWebACLRuleGroupAssociationExists(ctx, t, resourceName, &v),
 					acctest.CheckFrameworkResourceDisappears(ctx, t, tfwafv2.ResourceWebACLRuleGroupAssociation, resourceName),
 				),
 				ExpectNonEmptyPlan: true,
@@ -198,19 +196,19 @@ func TestAccWAFV2WebACLRuleGroupAssociation_disappears(t *testing.T) {
 func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_overrideAction(t *testing.T) {
 	ctx := acctest.Context(t)
 	var v wafv2.GetWebACLOutput
-	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	resourceName := "aws_wafv2_web_acl_rule_group_association.test"
 
-	resource.ParallelTest(t, resource.TestCase{
+	acctest.ParallelTest(ctx, t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.WAFV2ServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx),
+		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccWebACLRuleGroupAssociationConfig_RuleGroupReference_overrideAction(rName, "count"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebACLRuleGroupAssociationExists(ctx, resourceName, &v),
+					testAccCheckWebACLRuleGroupAssociationExists(ctx, t, resourceName, &v),
 					resource.TestCheckResourceAttr(resourceName, "override_action", "count"),
 				),
 			},
@@ -221,19 +219,19 @@ func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_overrideAction(t 
 func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_ruleActionOverride(t *testing.T) {
 	ctx := acctest.Context(t)
 	var v wafv2.GetWebACLOutput
-	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	resourceName := "aws_wafv2_web_acl_rule_group_association.test"
 
-	resource.ParallelTest(t, resource.TestCase{
+	acctest.ParallelTest(ctx, t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.WAFV2ServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx),
+		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccWebACLRuleGroupAssociationConfig_RuleGroupReference_ruleActionOverride(rName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebACLRuleGroupAssociationExists(ctx, resourceName, &v),
+					testAccCheckWebACLRuleGroupAssociationExists(ctx, t, resourceName, &v),
 					resource.TestCheckResourceAttr(resourceName, "rule_group_reference.0.rule_action_override.#", "2"),
 					resource.TestCheckResourceAttr(resourceName, "rule_group_reference.0.rule_action_override.0.name", "rule-1"),
 					resource.TestCheckResourceAttr(resourceName, "rule_group_reference.0.rule_action_override.0.action_to_use.#", "1"),
@@ -266,19 +264,19 @@ func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_ruleActionOverrid
 func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_ruleActionOverrideUpdate(t *testing.T) {
 	ctx := acctest.Context(t)
 	var v wafv2.GetWebACLOutput
-	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	resourceName := "aws_wafv2_web_acl_rule_group_association.test"
 
-	resource.ParallelTest(t, resource.TestCase{
+	acctest.ParallelTest(ctx, t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.WAFV2ServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx),
+		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccWebACLRuleGroupAssociationConfig_RuleGroupReference_ruleActionOverrideCount(rName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebACLRuleGroupAssociationExists(ctx, resourceName, &v),
+					testAccCheckWebACLRuleGroupAssociationExists(ctx, t, resourceName, &v),
 					resource.TestCheckResourceAttr(resourceName, "rule_group_reference.0.rule_action_override.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "rule_group_reference.0.rule_action_override.0.name", "rule-1"),
 					resource.TestCheckResourceAttr(resourceName, "rule_group_reference.0.rule_action_override.0.action_to_use.0.count.#", "1"),
@@ -287,7 +285,7 @@ func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_ruleActionOverrid
 			{
 				Config: testAccWebACLRuleGroupAssociationConfig_RuleGroupReference_ruleActionOverrideCaptcha(rName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebACLRuleGroupAssociationExists(ctx, resourceName, &v),
+					testAccCheckWebACLRuleGroupAssociationExists(ctx, t, resourceName, &v),
 					resource.TestCheckResourceAttr(resourceName, "rule_group_reference.0.rule_action_override.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "rule_group_reference.0.rule_action_override.0.name", "rule-1"),
 					resource.TestCheckResourceAttr(resourceName, "rule_group_reference.0.rule_action_override.0.action_to_use.0.captcha.#", "1"),
@@ -300,19 +298,19 @@ func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_ruleActionOverrid
 func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_priorityUpdate(t *testing.T) {
 	ctx := acctest.Context(t)
 	var v wafv2.GetWebACLOutput
-	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	resourceName := "aws_wafv2_web_acl_rule_group_association.test"
 
-	resource.ParallelTest(t, resource.TestCase{
+	acctest.ParallelTest(ctx, t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.WAFV2ServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx),
+		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccWebACLRuleGroupAssociationConfig_RuleGroupReference_priority(rName, 10),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebACLRuleGroupAssociationExists(ctx, resourceName, &v),
+					testAccCheckWebACLRuleGroupAssociationExists(ctx, t, resourceName, &v),
 					resource.TestCheckResourceAttr(resourceName, names.AttrPriority, "10"),
 				),
 			},
@@ -324,7 +322,7 @@ func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_priorityUpdate(t 
 					},
 				},
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebACLRuleGroupAssociationExists(ctx, resourceName, &v),
+					testAccCheckWebACLRuleGroupAssociationExists(ctx, t, resourceName, &v),
 					resource.TestCheckResourceAttr(resourceName, names.AttrPriority, "20"),
 				),
 			},
@@ -342,19 +340,19 @@ func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_priorityUpdate(t 
 func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_overrideActionUpdate(t *testing.T) {
 	ctx := acctest.Context(t)
 	var v wafv2.GetWebACLOutput
-	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	resourceName := "aws_wafv2_web_acl_rule_group_association.test"
 
-	resource.ParallelTest(t, resource.TestCase{
+	acctest.ParallelTest(ctx, t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.WAFV2ServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx),
+		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccWebACLRuleGroupAssociationConfig_RuleGroupReference_overrideAction(rName, "none"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebACLRuleGroupAssociationExists(ctx, resourceName, &v),
+					testAccCheckWebACLRuleGroupAssociationExists(ctx, t, resourceName, &v),
 					resource.TestCheckResourceAttr(resourceName, "override_action", "none"),
 				),
 			},
@@ -366,7 +364,7 @@ func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_overrideActionUpd
 					},
 				},
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebACLRuleGroupAssociationExists(ctx, resourceName, &v),
+					testAccCheckWebACLRuleGroupAssociationExists(ctx, t, resourceName, &v),
 					resource.TestCheckResourceAttr(resourceName, "override_action", "count"),
 				),
 			},
@@ -384,19 +382,19 @@ func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_overrideActionUpd
 func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_ruleNameRequiresReplace(t *testing.T) {
 	ctx := acctest.Context(t)
 	var v wafv2.GetWebACLOutput
-	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	resourceName := "aws_wafv2_web_acl_rule_group_association.test"
 
-	resource.ParallelTest(t, resource.TestCase{
+	acctest.ParallelTest(ctx, t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.WAFV2ServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx),
+		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccWebACLRuleGroupAssociationConfig_RuleGroupReference_ruleName(rName, "original-rule"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebACLRuleGroupAssociationExists(ctx, resourceName, &v),
+					testAccCheckWebACLRuleGroupAssociationExists(ctx, t, resourceName, &v),
 					resource.TestCheckResourceAttr(resourceName, "rule_name", "original-rule"),
 				),
 			},
@@ -408,7 +406,7 @@ func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_ruleNameRequiresR
 					},
 				},
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebACLRuleGroupAssociationExists(ctx, resourceName, &v),
+					testAccCheckWebACLRuleGroupAssociationExists(ctx, t, resourceName, &v),
 					resource.TestCheckResourceAttr(resourceName, "rule_name", "updated-rule"),
 				),
 			},
@@ -419,19 +417,19 @@ func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_ruleNameRequiresR
 func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_webACLARNRequiresReplace(t *testing.T) {
 	ctx := acctest.Context(t)
 	var v wafv2.GetWebACLOutput
-	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	resourceName := "aws_wafv2_web_acl_rule_group_association.test"
 
-	resource.ParallelTest(t, resource.TestCase{
+	acctest.ParallelTest(ctx, t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.WAFV2ServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx),
+		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccWebACLRuleGroupAssociationConfig_RuleGroupReference_webACL(rName, "first"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebACLRuleGroupAssociationExists(ctx, resourceName, &v),
+					testAccCheckWebACLRuleGroupAssociationExists(ctx, t, resourceName, &v),
 				),
 			},
 			{
@@ -442,7 +440,7 @@ func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_webACLARNRequires
 					},
 				},
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebACLRuleGroupAssociationExists(ctx, resourceName, &v),
+					testAccCheckWebACLRuleGroupAssociationExists(ctx, t, resourceName, &v),
 				),
 			},
 		},
@@ -452,19 +450,19 @@ func TestAccWAFV2WebACLRuleGroupAssociation_RuleGroupReference_webACLARNRequires
 func TestAccWAFV2WebACLRuleGroupAssociation_ManagedRuleGroup_basic(t *testing.T) {
 	ctx := acctest.Context(t)
 	var webACL wafv2.GetWebACLOutput
-	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	resourceName := "aws_wafv2_web_acl_rule_group_association.test"
 
-	resource.ParallelTest(t, resource.TestCase{
+	acctest.ParallelTest(ctx, t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.WAFV2ServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx),
+		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccWebACLRuleGroupAssociationConfig_ManagedRuleGroup_basic(rName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebACLRuleGroupAssociationExists(ctx, resourceName, &webACL),
+					testAccCheckWebACLRuleGroupAssociationExists(ctx, t, resourceName, &webACL),
 					resource.TestCheckResourceAttr(resourceName, "rule_name", "test-rule"),
 					resource.TestCheckResourceAttr(resourceName, names.AttrPriority, "1"),
 					resource.TestCheckResourceAttr(resourceName, "override_action", "none"),
@@ -488,19 +486,19 @@ func TestAccWAFV2WebACLRuleGroupAssociation_ManagedRuleGroup_basic(t *testing.T)
 func TestAccWAFV2WebACLRuleGroupAssociation_ManagedRuleGroup_withVersion(t *testing.T) {
 	ctx := acctest.Context(t)
 	var webACL wafv2.GetWebACLOutput
-	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	resourceName := "aws_wafv2_web_acl_rule_group_association.test"
 
-	resource.ParallelTest(t, resource.TestCase{
+	acctest.ParallelTest(ctx, t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.WAFV2ServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx),
+		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccWebACLRuleGroupAssociationConfig_ManagedRuleGroup_withVersion(rName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebACLRuleGroupAssociationExists(ctx, resourceName, &webACL),
+					testAccCheckWebACLRuleGroupAssociationExists(ctx, t, resourceName, &webACL),
 					resource.TestCheckResourceAttr(resourceName, "rule_name", "test-rule"),
 					resource.TestCheckResourceAttr(resourceName, names.AttrPriority, "1"),
 					resource.TestCheckResourceAttr(resourceName, "override_action", "none"),
@@ -525,19 +523,19 @@ func TestAccWAFV2WebACLRuleGroupAssociation_ManagedRuleGroup_withVersion(t *test
 func TestAccWAFV2WebACLRuleGroupAssociation_ManagedRuleGroup_ruleActionOverride(t *testing.T) {
 	ctx := acctest.Context(t)
 	var webACL wafv2.GetWebACLOutput
-	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	resourceName := "aws_wafv2_web_acl_rule_group_association.test"
 
-	resource.ParallelTest(t, resource.TestCase{
+	acctest.ParallelTest(ctx, t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.WAFV2ServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx),
+		CheckDestroy:             testAccCheckWebACLRuleGroupAssociationDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccWebACLRuleGroupAssociationConfig_ManagedRuleGroup_ruleActionOverride(rName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebACLRuleGroupAssociationExists(ctx, resourceName, &webACL),
+					testAccCheckWebACLRuleGroupAssociationExists(ctx, t, resourceName, &webACL),
 					resource.TestCheckResourceAttr(resourceName, "rule_name", "test-rule"),
 					resource.TestCheckResourceAttr(resourceName, names.AttrPriority, "1"),
 					resource.TestCheckResourceAttr(resourceName, "override_action", "none"),
@@ -562,9 +560,9 @@ func TestAccWAFV2WebACLRuleGroupAssociation_ManagedRuleGroup_ruleActionOverride(
 	})
 }
 
-func testAccCheckWebACLRuleGroupAssociationDestroy(ctx context.Context) resource.TestCheckFunc {
+func testAccCheckWebACLRuleGroupAssociationDestroy(ctx context.Context, t *testing.T) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		conn := acctest.Provider.Meta().(*conns.AWSClient).WAFV2Client(ctx)
+		conn := acctest.ProviderMeta(ctx, t).WAFV2Client(ctx)
 
 		for _, rs := range s.RootModule().Resources {
 			if rs.Type != "aws_wafv2_web_acl_rule_group_association" {
@@ -644,7 +642,7 @@ func testAccCheckWebACLRuleGroupAssociationDestroy(ctx context.Context) resource
 	}
 }
 
-func testAccCheckWebACLRuleGroupAssociationExists(ctx context.Context, n string, v *wafv2.GetWebACLOutput) resource.TestCheckFunc {
+func testAccCheckWebACLRuleGroupAssociationExists(ctx context.Context, t *testing.T, n string, v *wafv2.GetWebACLOutput) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -683,7 +681,7 @@ func testAccCheckWebACLRuleGroupAssociationExists(ctx context.Context, n string,
 			return fmt.Errorf("error parsing Web ACL ARN: %w", err)
 		}
 
-		conn := acctest.Provider.Meta().(*conns.AWSClient).WAFV2Client(ctx)
+		conn := acctest.ProviderMeta(ctx, t).WAFV2Client(ctx)
 
 		// Get the Web ACL
 		webACL, err := tfwafv2.FindWebACLByThreePartKey(ctx, conn, webACLID, webACLName, webACLScope)
