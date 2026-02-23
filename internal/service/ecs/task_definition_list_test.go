@@ -135,7 +135,7 @@ func TestAccECSTaskDefinition_List_includeResource(t *testing.T) {
 					querycheck.ExpectResourceKnownValues("aws_ecs_task_definition.test", tfqueryfilter.ByResourceIdentityFunc(identity1.Checks()), []querycheck.KnownValueCheck{
 						tfquerycheck.KnownValueCheck(tfjsonpath.New(names.AttrARN), tfknownvalue.RegionalARNExact("ecs", "task-definition/"+rName+"-0:1")),
 						tfquerycheck.KnownValueCheck(tfjsonpath.New(names.AttrRegion), knownvalue.StringExact(acctest.Region())),
-						tfquerycheck.KnownValueCheck(tfjsonpath.New(names.AttrID), knownvalue.StringExact(rName)),
+						tfquerycheck.KnownValueCheck(tfjsonpath.New(names.AttrID), knownvalue.StringExact(rName+"-0")),
 						tfquerycheck.KnownValueCheck(tfjsonpath.New(names.AttrTags), knownvalue.MapExact(map[string]knownvalue.Check{
 							acctest.CtKey1: knownvalue.StringExact(acctest.CtValue1),
 						})),
