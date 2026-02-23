@@ -17,7 +17,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
 	awstypes "github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	sdkretry "github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-aws/internal/conns"
 	"github.com/hashicorp/terraform-provider-aws/internal/create"
@@ -41,7 +40,6 @@ var functionRegexp = `^(arn:[\w-]+:lambda:)?(` + inttypes.CanonicalRegionPattern
 // @Testing(preIdentityVersion="6.9.0")
 // @Testing(existsType="github.com/hashicorp/terraform-provider-aws/internal/service/lambda;tflambda;tflambda.PolicyStatement")
 // @Testing(importStateIdFunc="testAccPermissionImportStateIDFunc")
-// @Testing(existsTakesT=false, destroyTakesT=false)
 func resourcePermission() *schema.Resource {
 	return &schema.Resource{
 		CreateWithoutTimeout: resourcePermissionCreate,
@@ -304,9 +302,8 @@ func findPolicy(ctx context.Context, conn *lambda.Client, input *lambda.GetPolic
 	output, err := conn.GetPolicy(ctx, input)
 
 	if errs.IsA[*awstypes.ResourceNotFoundException](err) {
-		return nil, &sdkretry.NotFoundError{
-			LastError:   err,
-			LastRequest: input,
+		return nil, &retry.NotFoundError{
+			LastError: err,
 		}
 	}
 
@@ -348,9 +345,8 @@ func findPolicyStatementByTwoPartKey(ctx context.Context, conn *lambda.Client, f
 		}
 	}
 
-	return nil, &sdkretry.NotFoundError{
-		LastRequest:  statementID,
-		LastResponse: policy,
+	return nil, &retry.NotFoundError{
+		Message: fmt.Sprintf("statement %s not found in policy", statementID),
 	}
 }
 
@@ -396,7 +392,7 @@ func (permissionImportID) Create(d *schema.ResourceData) string {
 	return d.Get("statement_id").(string)
 }
 
-func (permissionImportID) Parse(id string) (string, map[string]string, error) {
+func (permissionImportID) Parse(id string) (string, map[string]any, error) {
 	parts := strings.Split(id, "/")
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
 		return id, nil, fmt.Errorf("Unexpected format of ID (%q), expected FUNCTION_NAME/STATEMENT_ID or FUNCTION_NAME:QUALIFIER/STATEMENT_ID", id)
@@ -404,7 +400,7 @@ func (permissionImportID) Parse(id string) (string, map[string]string, error) {
 
 	functionName := parts[0]
 	statementID := parts[1]
-	results := map[string]string{
+	results := map[string]any{
 		"function_name": functionName,
 		"statement_id":  statementID,
 	}
