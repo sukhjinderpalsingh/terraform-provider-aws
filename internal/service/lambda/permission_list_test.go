@@ -169,9 +169,9 @@ func TestAccLambdaPermission_List_includeResource(t *testing.T) {
 				QueryResultChecks: []querycheck.QueryResultCheck{
 					querycheck.ExpectResourceKnownValues("aws_lambda_permission.test", tfqueryfilter.ByResourceIdentityFunc(identity1.Checks()), []querycheck.KnownValueCheck{
 						tfquerycheck.KnownValueCheck(tfjsonpath.New("statement_id"), knownvalue.StringExact(rName+"-0")),
-						tfquerycheck.KnownValueCheck(tfjsonpath.New("action"), knownvalue.StringExact("lambda:InvokeFunction")),
+						tfquerycheck.KnownValueCheck(tfjsonpath.New(names.AttrAction), knownvalue.StringExact("lambda:InvokeFunction")),
 						tfquerycheck.KnownValueCheck(tfjsonpath.New("function_name"), knownvalue.StringExact(rName)),
-						tfquerycheck.KnownValueCheck(tfjsonpath.New("principal"), knownvalue.StringExact("events.amazonaws.com")),
+						tfquerycheck.KnownValueCheck(tfjsonpath.New(names.AttrPrincipal), knownvalue.StringExact("events.amazonaws.com")),
 					}),
 				},
 			},
