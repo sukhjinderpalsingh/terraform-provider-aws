@@ -235,7 +235,6 @@ func resourceRepositoryFlatten(_ context.Context, d *schema.ResourceData, reposi
 	d.Set(names.AttrName, repository.RepositoryName)
 	d.Set("registry_id", repository.RegistryId)
 	d.Set("repository_url", repository.RepositoryUri)
-
 }
 
 func resourceRepositoryUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
