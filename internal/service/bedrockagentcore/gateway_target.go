@@ -178,7 +178,7 @@ func restrictedHeaders() []string {
 		"Width",
 		"Viewport-Width",
 		"Downlink",
-		"ECT", //nolint:misspell
+		"ECT", //nolint:misspell // https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/ECT
 		"RTT",
 		"Save-Data",
 		// Other Security
