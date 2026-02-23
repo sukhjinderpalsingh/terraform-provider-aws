@@ -58,7 +58,7 @@ func (l *listResourceTaskDefinition) List(ctx context.Context, request list.List
 			result := request.NewListResult(ctx)
 			rd := l.ResourceData()
 			rd.SetId(arnStr)
-			rd.Set(names.AttrARN, arnStr) //nolint:errcheck
+			rd.Set(names.AttrARN, arnStr)
 
 			taskDefinition, tags, err := findTaskDefinitionByFamilyOrARN(ctx, conn, arnStr)
 			if err != nil {
