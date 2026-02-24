@@ -154,14 +154,14 @@ func resourceAttachmentRead(ctx context.Context, d *schema.ResourceData, meta an
 	}
 
 	d.Set("target_group_arn", targetGroupARN)
-	d.Set("target_id", aws.ToString(target.Target.Id))
+	d.Set("target_id", target.Target.Id)
 
 	if rawConfig := d.GetRawConfig(); rawConfig.IsKnown() && !rawConfig.IsNull() {
 		if rawPort := rawConfig.GetAttr(names.AttrPort); rawPort.IsKnown() && !rawPort.IsNull() {
-			d.Set(names.AttrPort, aws.ToInt32(target.Target.Port))
+			d.Set(names.AttrPort, target.Target.Port)
 		}
 		if rawAZ := rawConfig.GetAttr(names.AttrAvailabilityZone); rawAZ.IsKnown() && !rawAZ.IsNull() {
-			d.Set(names.AttrAvailabilityZone, aws.ToString(target.Target.AvailabilityZone))
+			d.Set(names.AttrAvailabilityZone, target.Target.AvailabilityZone)
 		}
 	}
 
