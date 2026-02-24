@@ -378,30 +378,31 @@ func TestAccEventsConnection_oAuth(t *testing.T) {
 func TestAccEventsConnection_connectivityParamters(t *testing.T) {
 	ctx := acctest.Context(t)
 	var v eventbridge.DescribeConnectionOutput
-	name := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	name := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 
 	oAuthorizationType := "OAUTH_CLIENT_CREDENTIALS"
 
-	description := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	description := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
+
 	// oauth
 	authorizationEndpoint := "https://example.com/auth"
 	httpMethod := "POST"
 
 	// client_parameters
-	clientID := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
-	clientSecret := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	clientID := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
+	clientSecret := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 
 	// oauth_http_parameters
-	bodyKey := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
-	bodyValue := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	bodyKey := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
+	bodyValue := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	bodyIsSecretValue := true
 
-	headerKey := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
-	headerValue := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	headerKey := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
+	headerValue := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	headerIsSecretValue := true
 
-	queryStringKey := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
-	queryStringValue := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	queryStringKey := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
+	queryStringValue := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	queryStringIsSecretValue := true
 
 	resourceName := "aws_cloudwatch_event_connection.oauth"
@@ -410,7 +411,7 @@ func TestAccEventsConnection_connectivityParamters(t *testing.T) {
 		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.EventsServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckConnectionDestroy(ctx),
+		CheckDestroy:             testAccCheckConnectionDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConnectionConfig_oauthConnectivityParameters(
@@ -432,7 +433,7 @@ func TestAccEventsConnection_connectivityParamters(t *testing.T) {
 					queryStringIsSecretValue,
 				),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckConnectionExists(ctx, resourceName, &v),
+					testAccCheckConnectionExists(ctx, t, resourceName, &v),
 					resource.TestCheckResourceAttr(resourceName, names.AttrName, name),
 					resource.TestCheckResourceAttr(resourceName, names.AttrDescription, description),
 					resource.TestCheckResourceAttr(resourceName, "authorization_type", oAuthorizationType),

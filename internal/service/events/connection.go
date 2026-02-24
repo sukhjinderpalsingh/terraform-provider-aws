@@ -504,9 +504,9 @@ func waitConnectionCreated(ctx context.Context, conn *eventbridge.Client, name s
 		timeout = 10 * time.Minute
 	)
 	stateConf := &retry.StateChangeConf{
-		Pending: enum.Slice(types.ConnectionStateCreating),
+		Pending: enum.Slice(types.ConnectionStateCreating, types.ConnectionStateAuthorizing),
 		Target:  enum.Slice(types.ConnectionStateAuthorized, types.ConnectionStateDeauthorized, types.ConnectionStateAuthorizing, types.ConnectionStateActive),
-		Refresh: statusConnectionState(ctx, conn, name),
+		Refresh: statusConnectionState(conn, name),
 		Timeout: timeout,
 	}
 
@@ -528,7 +528,7 @@ func waitConnectionUpdated(ctx context.Context, conn *eventbridge.Client, name s
 	stateConf := &retry.StateChangeConf{
 		Pending: enum.Slice(types.ConnectionStateUpdating, types.ConnectionStateDeauthorizing),
 		Target:  enum.Slice(types.ConnectionStateAuthorized, types.ConnectionStateDeauthorized, types.ConnectionStateAuthorizing, types.ConnectionStateActive),
-		Refresh: statusConnectionState(ctx, conn, name),
+		Refresh: statusConnectionState(conn, name),
 		Timeout: timeout,
 	}
 
@@ -586,8 +586,8 @@ func expandCreateConnectionAuthRequestParameters(tfList []any) *types.CreateConn
 		if v, ok := tfMap["invocation_http_parameters"].([]any); ok && len(v) > 0 {
 			apiObject.InvocationHttpParameters = expandConnectionHTTPParameters(v)
 		}
-		if v, ok := tfMap["connectivity_parameters"].([]interface{}); ok && len(v) > 0 {
-			apiObject.ConnectivityParameters = expandConnectivityResourceParameters(v[0].(map[string]interface{}))
+		if v, ok := tfMap["connectivity_parameters"].([]any); ok && len(v) > 0 {
+			apiObject.ConnectivityParameters = expandConnectivityResourceParameters(v[0].(map[string]any))
 		}
 	}
 
@@ -819,10 +819,10 @@ func flattenConnectionAuthParameters(apiObject *types.ConnectionAuthResponsePara
 	}
 
 	if apiObject.ConnectivityParameters != nil {
-		tfMap["connectivity_parameters"] = []map[string]interface{}{flattenDescribeConnectionConnectivityParameters(apiObject.ConnectivityParameters)}
+		tfMap["connectivity_parameters"] = []map[string]any{flattenDescribeConnectionConnectivityParameters(apiObject.ConnectivityParameters)}
 	}
 
-	return []map[string]interface{}{tfMap}
+	return []map[string]any{tfMap}
 }
 
 func flattenConnectionAPIKeyAuthParameters(apiObject *types.ConnectionApiKeyAuthResponseParameters, d *schema.ResourceData) []map[string]any {
@@ -969,8 +969,8 @@ func expandUpdateConnectionAuthRequestParameters(tfList []any) *types.UpdateConn
 		if v, ok := tfMap["invocation_http_parameters"].([]any); ok && len(v) > 0 {
 			apiObject.InvocationHttpParameters = expandConnectionHTTPParameters(v)
 		}
-		if v, ok := tfMap["connectivity_parameters"].([]interface{}); ok && len(v) > 0 {
-			apiObject.ConnectivityParameters = expandConnectivityResourceParameters(v[0].(map[string]interface{}))
+		if v, ok := tfMap["connectivity_parameters"].([]any); ok && len(v) > 0 {
+			apiObject.ConnectivityParameters = expandConnectivityResourceParameters(v[0].(map[string]any))
 		}
 	}
 
