@@ -13,14 +13,15 @@ import (
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+	"github.com/hashicorp/terraform-provider-aws/internal/acctest"
 )
 
 func TestStateValue_ValuesSame(t *testing.T) {
-	t.Parallel()
+	ctx := acctest.Context(t)
 
 	stateValue := StateValue()
 
-	r.Test(t, r.TestCase{
+	acctest.ParallelTest(ctx, t, r.TestCase{
 		ProviderFactories: map[string]func() (*schema.Provider, error){
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
@@ -50,11 +51,11 @@ func TestStateValue_ValuesSame(t *testing.T) {
 }
 
 func TestStateValue_ValuesNotSame(t *testing.T) {
-	t.Parallel()
+	ctx := acctest.Context(t)
 
 	stateValue := StateValue()
 
-	r.Test(t, r.TestCase{
+	acctest.ParallelTest(ctx, t, r.TestCase{
 		ProviderFactories: map[string]func() (*schema.Provider, error){
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
@@ -85,11 +86,11 @@ func TestStateValue_ValuesNotSame(t *testing.T) {
 }
 
 func TestStateValue_NotInitialized(t *testing.T) {
-	t.Parallel()
+	ctx := acctest.Context(t)
 
 	stateValue := StateValue()
 
-	r.Test(t, r.TestCase{
+	acctest.ParallelTest(ctx, t, r.TestCase{
 		ProviderFactories: map[string]func() (*schema.Provider, error){
 			"test": func() (*schema.Provider, error) { //nolint:unparam // required signature
 				return testProvider(), nil
