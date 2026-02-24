@@ -17,7 +17,6 @@ import ( // nosemgrep:ci.semgrep.aws.multiple-service-imports
 
 	"github.com/YakDriver/regexache"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
 	awstypes "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing/types"
@@ -362,14 +361,7 @@ func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceLoadBalancerFlatten(ctx context.Context, awsClient *conns.AWSClient, lb *awstypes.LoadBalancerDescription, lbAttrs *awstypes.LoadBalancerAttributes, d *schema.ResourceData) error {
-	arn := arn.ARN{
-		Partition: awsClient.Partition(ctx),
-		Region:    awsClient.Region(ctx),
-		Service:   "elasticloadbalancing",
-		AccountID: awsClient.AccountID(ctx),
-		Resource:  "loadbalancer/" + d.Id(),
-	}
-	d.Set(names.AttrARN, arn.String())
+	d.Set(names.AttrARN,  awsClient.RegionalARN(ctx, "elasticloadbalancing", "loadbalancer/"+d.Id()))
 	d.Set(names.AttrAvailabilityZones, lb.AvailabilityZones)
 	d.Set("connection_draining", lbAttrs.ConnectionDraining.Enabled)
 	d.Set("connection_draining_timeout", lbAttrs.ConnectionDraining.Timeout)
