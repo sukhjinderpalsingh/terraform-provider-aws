@@ -375,14 +375,16 @@ func TestAccEventsConnection_oAuth(t *testing.T) {
 	})
 }
 
-func TestAccEventsConnection_connectivityParamters(t *testing.T) {
+func TestAccEventsConnection_connectivityParameters(t *testing.T) {
 	ctx := acctest.Context(t)
-	var v eventbridge.DescribeConnectionOutput
+	var v1, v2 eventbridge.DescribeConnectionOutput
 	name := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
+	nameModified := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 
 	oAuthorizationType := "OAUTH_CLIENT_CREDENTIALS"
 
 	description := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
+	descriptionModified := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 
 	// oauth
 	authorizationEndpoint := "https://example.com/auth"
@@ -407,7 +409,7 @@ func TestAccEventsConnection_connectivityParamters(t *testing.T) {
 
 	resourceName := "aws_cloudwatch_event_connection.oauth"
 
-	resource.ParallelTest(t, resource.TestCase{
+	acctest.ParallelTest(ctx, t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.EventsServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
@@ -433,9 +435,60 @@ func TestAccEventsConnection_connectivityParamters(t *testing.T) {
 					queryStringIsSecretValue,
 				),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckConnectionExists(ctx, t, resourceName, &v),
+					testAccCheckConnectionExists(ctx, t, resourceName, &v1),
 					resource.TestCheckResourceAttr(resourceName, names.AttrName, name),
 					resource.TestCheckResourceAttr(resourceName, names.AttrDescription, description),
+					resource.TestCheckResourceAttr(resourceName, "authorization_type", oAuthorizationType),
+					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.authorization_endpoint", authorizationEndpoint),
+					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.http_method", httpMethod),
+					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.client_parameters.0.client_id", clientID),
+					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.oauth_http_parameters.0.body.0.key", bodyKey),
+					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.oauth_http_parameters.0.body.0.is_value_secret", strconv.FormatBool(bodyIsSecretValue)),
+					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.oauth_http_parameters.0.header.0.key", headerKey),
+					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.oauth_http_parameters.0.header.0.is_value_secret", strconv.FormatBool(headerIsSecretValue)),
+					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.oauth_http_parameters.0.query_string.0.key", queryStringKey),
+					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.oauth_http_parameters.0.query_string.0.is_value_secret", strconv.FormatBool(queryStringIsSecretValue)),
+					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.connectivity_parameters.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.connectivity_parameters.0.resource_parameters.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "invocation_connectivity_parameters.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "invocation_connectivity_parameters.0.resource_parameters.#", "1"),
+				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"auth_parameters.0.oauth.0.client_parameters.0.client_secret",
+					"auth_parameters.0.oauth.0.oauth_http_parameters.0.body.0.value",
+					"auth_parameters.0.oauth.0.oauth_http_parameters.0.header.0.value",
+					"auth_parameters.0.oauth.0.oauth_http_parameters.0.query_string.0.value",
+				},
+			},
+			{
+				Config: testAccConnectionConfig_oauthConnectivityParameters(
+					nameModified,
+					descriptionModified,
+					oAuthorizationType,
+					authorizationEndpoint,
+					httpMethod,
+					clientID,
+					clientSecret,
+					bodyKey,
+					bodyValue,
+					bodyIsSecretValue,
+					headerKey,
+					headerValue,
+					headerIsSecretValue,
+					queryStringKey,
+					queryStringValue,
+					queryStringIsSecretValue,
+				),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnectionExists(ctx, t, resourceName, &v2),
+					testAccCheckConnectionRecreated(&v1, &v2),
+					resource.TestCheckResourceAttr(resourceName, names.AttrName, nameModified),
+					resource.TestCheckResourceAttr(resourceName, names.AttrDescription, descriptionModified),
 					resource.TestCheckResourceAttr(resourceName, "authorization_type", oAuthorizationType),
 					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.authorization_endpoint", authorizationEndpoint),
 					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.http_method", httpMethod),
