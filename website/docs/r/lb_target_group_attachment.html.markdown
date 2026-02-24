@@ -130,4 +130,37 @@ This resource exports the following attributes in addition to the arguments abov
 
 ## Import
 
-You cannot import Target Group Attachments.
+In Terraform v1.5.0 and later, use an [`import` block](https://developer.hashicorp.com/terraform/language/import) to import Target Group Attachments using `target_group_arn`, `target_id`, and optionally `port` and `availability_zone` separated by commas (`,`). For example:
+
+Import with target group ARN and target ID only (port defaults to target group port):
+
+```terraform
+import {
+  to = aws_lb_target_group_attachment.example
+  id = "arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-tg/abc123,i-0123456789abcdef0"
+}
+```
+
+Import with explicit port:
+
+```terraform
+import {
+  to = aws_lb_target_group_attachment.example
+  id = "arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-tg/abc123,i-0123456789abcdef0,8080"
+}
+```
+
+Import with port and availability zone:
+
+```terraform
+import {
+  to = aws_lb_target_group_attachment.example
+  id = "arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-tg/abc123,10.0.1.100,8080,us-west-2a"
+}
+```
+
+Using `terraform import`, import Target Group Attachments using the same format. For example:
+
+```console
+% terraform import aws_lb_target_group_attachment.example arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-tg/abc123,i-0123456789abcdef0,8080
+```
