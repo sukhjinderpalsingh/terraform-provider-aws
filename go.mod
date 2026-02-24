@@ -123,7 +123,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.45.19
 	github.com/aws/aws-sdk-go-v2/service/evidently v1.30.0
 	github.com/aws/aws-sdk-go-v2/service/evs v1.6.1
-	github.com/aws/aws-sdk-go-v2/service/finspace v1.33.17
+	github.com/aws/aws-sdk-go-v2/service/finspace v1.33.18
 	github.com/aws/aws-sdk-go-v2/service/firehose v1.42.9
 	github.com/aws/aws-sdk-go-v2/service/fis v1.37.16
 	github.com/aws/aws-sdk-go-v2/service/fms v1.44.17
