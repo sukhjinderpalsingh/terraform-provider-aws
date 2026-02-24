@@ -127,7 +127,7 @@ resource "aws_{service}_tag" "test" {
 }
 ```
 
-- Run `make testacc TESTS=TestAcc{Service}Tags_ PKG={Service}` and ensure there are no failures.
+- Run `make testacc TESTS=TestAcc{Service}Tag_ PKG={Service}` and ensure there are no failures.
 - Create `website/docs/r/{service}_tag.html.markdown` with initial documentation similar to the following:
 
 ``````markdown
