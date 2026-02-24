@@ -16,7 +16,7 @@ import (
 	"github.com/hashicorp/terraform-provider-aws/internal/acctest"
 )
 
-func TestStateValue_ValuesSame(t *testing.T) {
+func TestStateValue_ValuesSame(t *testing.T) { //nolint:paralleltest // false positive
 	ctx := acctest.Context(t)
 
 	stateValue := StateValue()
@@ -50,7 +50,7 @@ func TestStateValue_ValuesSame(t *testing.T) {
 	})
 }
 
-func TestStateValue_ValuesNotSame(t *testing.T) {
+func TestStateValue_ValuesNotSame(t *testing.T) { //nolint:paralleltest // false positive
 	ctx := acctest.Context(t)
 
 	stateValue := StateValue()
@@ -85,7 +85,7 @@ func TestStateValue_ValuesNotSame(t *testing.T) {
 	})
 }
 
-func TestStateValue_NotInitialized(t *testing.T) {
+func TestStateValue_NotInitialized(t *testing.T) { //nolint:paralleltest // false positive
 	ctx := acctest.Context(t)
 
 	stateValue := StateValue()

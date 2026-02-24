@@ -1238,6 +1238,8 @@ func TestAccOpenSearchDomain_AdvancedSecurityOptions_jwtOptions(t *testing.T) {
 }
 
 func TestAccOpenSearchDomain_AdvancedSecurityOptions_jwtOptions_versionValidation(t *testing.T) {
+	t.Parallel()
+
 	ctx := acctest.Context(t)
 
 	testCases := map[string]struct {
@@ -1270,7 +1272,7 @@ func TestAccOpenSearchDomain_AdvancedSecurityOptions_jwtOptions_versionValidatio
 		},
 	}
 
-	for name, tc := range testCases {
+	for name, tc := range testCases { //nolint:paralleltest // false positive
 		t.Run(name, func(t *testing.T) {
 			rName := testAccRandomDomainName()
 
