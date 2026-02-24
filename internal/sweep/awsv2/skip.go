@@ -43,6 +43,10 @@ func SkipSweepError(err error) bool {
 	if tfawserr.ErrMessageContains(err, "BadRequestException", "not supported") {
 		return true
 	}
+	// Example (GovCloud): DisabledOperationException: This Operation is currently not supported for your account
+	if tfawserr.ErrMessageContains(err, "DisabledOperationException", "is currently not supported") {
+		return true
+	}
 	// Example (GovCloud): ForbiddenException: HTTP status code 403: Access forbidden. You do not have permission to perform this operation. Check your credentials and try your request again
 	if tfawserr.ErrCodeEquals(err, "ForbiddenException") {
 		return true
