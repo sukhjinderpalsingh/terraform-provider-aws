@@ -30,7 +30,7 @@ func TestAcc{Service}Tag_basic(t *testing.T) {
 		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.{Service}ServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheck{Service}TagDestroy(ctx),
+		CheckDestroy:             testAccCheck{Service}TagDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAcc{Service}TagConfig(rName, "key1", "value1"),
@@ -58,7 +58,7 @@ func TestAcc{Service}Tag_disappears(t *testing.T) {
 		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.{Service}ServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheck{Service}TagDestroy(ctx),
+		CheckDestroy:             testAccCheck{Service}TagDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAcc{Service}TagConfig(rName, "key1", "value1"),
@@ -81,7 +81,7 @@ func TestAcc{Service}Tag_Value(t *testing.T) {
 		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.{Service}ServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheck{Service}TagDestroy(ctx),
+		CheckDestroy:             testAccCheck{Service}TagDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAcc{Service}TagConfig(rName, "key1", "value1"),
