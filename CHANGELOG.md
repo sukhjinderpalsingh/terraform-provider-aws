@@ -29,6 +29,7 @@ BUG FIXES:
 * resource/aws_bedrockagentcore_gateway_target: Add `credential_provider_configuration.oauth.default_return_url` and `credential_provider_configuration.oauth.grant_type` arguments ([#46127](https://github.com/hashicorp/terraform-provider-aws/issues/46127))
 * resource/aws_bedrockagentcore_gateway_target: Retry IAM eventual consistency errors on Create ([#46127](https://github.com/hashicorp/terraform-provider-aws/issues/46127))
 * resource/aws_billing_view: Fix "inconsistent result after apply" errors caused by ordering of `data_filter_expression.dimensions.values` ([#46462](https://github.com/hashicorp/terraform-provider-aws/issues/46462))
+* resource/aws_s3tables_table_bucket: Change `encryption_configuration` to Optional and Computed, fixing `unexpected new value: .encryption_configuration: was null, but now cty.ObjectVal(map[string]cty.Value{"kms_key_arn":cty.NullVal(cty.String),"sse_algorithm":cty.StringVal("AES256")})` errors ([#46150](https://github.com/hashicorp/terraform-provider-aws/issues/46150))
 * resource/aws_subnet: Fixed IPv6 CIDR block validation and assignment to IPAM-provisioned subnets. ([#46556](https://github.com/hashicorp/terraform-provider-aws/issues/46556))
 * resource/aws_vpc_endpoint: Fix `InvalidParameter: DnsOptions PrivateDnsOnlyForInboundResolverEndpoint is applicable only to Interface VPC Endpoints` errors when creating S3Tables VPC endpoints ([#46102](https://github.com/hashicorp/terraform-provider-aws/issues/46102))
 
