@@ -159,10 +159,7 @@ func (ps *iamPolicyStatementPrincipalSet) UnmarshalJSON(b []byte) error {
 				for i, v := range value.([]any) {
 					s, ok := v.(string)
 					if !ok {
-						return fmt.Errorf(
-							"Unsupported element type %T for IAMPolicyStatementPrincipalSet.Identifiers[%d] (principal type %q): must be string",
-							v, i, key,
-						)
+						return fmt.Errorf("Unsupported element type %T for IAMPolicyStatementPrincipalSet.Identifiers[%d] (principal type %q): must be string", v, i, key)
 					}
 					values = append(values, s)
 				}
