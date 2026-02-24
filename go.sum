@@ -363,8 +363,8 @@ github.com/aws/aws-sdk-go-v2/service/mediapackage v1.39.18 h1:SLDhTod22mcNHoSP8A
 github.com/aws/aws-sdk-go-v2/service/mediapackage v1.39.18/go.mod h1:8z7YhNYgYGG+VVcVY3QqV+V5ogOmVadSOPaO9NFeZmY=
 github.com/aws/aws-sdk-go-v2/service/mediapackagev2 v1.35.3 h1:a+yuuMC7pqHDOvs6dCafGld2ls6nVVrkrPxuHeUviXQ=
 github.com/aws/aws-sdk-go-v2/service/mediapackagev2 v1.35.3/go.mod h1:lSzEpqDPRuNhxhkuR0IMqrHG6XT9sRGKitfxAlEXCfg=
-github.com/aws/aws-sdk-go-v2/service/mediapackagevod v1.39.17 h1:ct9hzYj7Bqm6SRe2rHueW/Ftf8u1T+OQzpVOsz4arnY=
-github.com/aws/aws-sdk-go-v2/service/mediapackagevod v1.39.17/go.mod h1:eNuv+oCP/UZgPJvJYvUg4Y0LSuLu6XYFIBBj1HOpqwc=
+github.com/aws/aws-sdk-go-v2/service/mediapackagevod v1.39.18 h1:sc8QiKRj/Yu3ZCyWtGxABNaaB+77BOC6ZkCR8QXE28g=
+github.com/aws/aws-sdk-go-v2/service/mediapackagevod v1.39.18/go.mod h1:Mxpniiz/rDgYXZ+YBDUyfed17Y8N/MXX3FbvSGOfx6U=
 github.com/aws/aws-sdk-go-v2/service/mediastore v1.29.17 h1:OdOkPbhi8SUmffwYM8tyYSrYOgdUDvpfHT4uh8qaSbY=
 github.com/aws/aws-sdk-go-v2/service/mediastore v1.29.17/go.mod h1:cyQoklkOFFDWNGU72qlaw1yqmI9wAfaPZFY2OGtdapM=
 github.com/aws/aws-sdk-go-v2/service/memorydb v1.33.10 h1:2kKGjFc3TcrIaGhGGlO/dO5x/DP0Z4ZhS4VOQGw2NH8=
