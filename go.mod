@@ -103,7 +103,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/docdb v1.48.10
 	github.com/aws/aws-sdk-go-v2/service/docdbelastic v1.20.10
 	github.com/aws/aws-sdk-go-v2/service/drs v1.36.10
-	github.com/aws/aws-sdk-go-v2/service/dsql v1.12.4
+	github.com/aws/aws-sdk-go-v2/service/dsql v1.12.5
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.55.0
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.290.0
 	github.com/aws/aws-sdk-go-v2/service/ecr v1.55.2
