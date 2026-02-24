@@ -33,11 +33,11 @@ func TestAcc{Service}Tag_basic(t *testing.T) {
 		CheckDestroy:             testAccCheck{Service}TagDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAcc{Service}TagConfig(rName, "key1", "value1"),
+				Config: testAcc{Service}TagConfig(rName, acctest.CtKey1, acctest.CtValue1),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheck{Service}TagExists(ctx, t, resourceName),
-					resource.TestCheckResourceAttr(resourceName, "key", "key1"),
-					resource.TestCheckResourceAttr(resourceName, "value", "value1"),
+					resource.TestCheckResourceAttr(resourceName, names.AttrKey, acctest.CtKey1),
+					resource.TestCheckResourceAttr(resourceName, names.AttrValue, acctest.CtValue1),
 				),
 			},
 			{
@@ -61,7 +61,7 @@ func TestAcc{Service}Tag_disappears(t *testing.T) {
 		CheckDestroy:             testAccCheck{Service}TagDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAcc{Service}TagConfig(rName, "key1", "value1"),
+				Config: testAcc{Service}TagConfig(rName, acctest.CtKey1, acctest.CtValue1),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheck{Service}TagExists(ctx, t, resourceName),
 					acctest.CheckSDKResourceDisappears(ctx, t, resourceAws{Service}Tag(), resourceName),
@@ -84,11 +84,11 @@ func TestAcc{Service}Tag_Value(t *testing.T) {
 		CheckDestroy:             testAccCheck{Service}TagDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAcc{Service}TagConfig(rName, "key1", "value1"),
+				Config: testAcc{Service}TagConfig(rName, acctest.CtKey1, acctest.CtValue1),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheck{Service}TagExists(ctx, t, resourceName),
-					resource.TestCheckResourceAttr(resourceName, "key", "key1"),
-					resource.TestCheckResourceAttr(resourceName, "value", "value1"),
+					resource.TestCheckResourceAttr(resourceName, names.AttrKey, acctest.CtKey1),
+					resource.TestCheckResourceAttr(resourceName, names.AttrValue, acctest.CtValue1),
 				),
 			},
 			{
@@ -97,11 +97,11 @@ func TestAcc{Service}Tag_Value(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAcc{Service}TagConfig(rName, "key1", "value1updated"),
+				Config: testAcc{Service}TagConfig(rName, acctest.CtKey1, acctest.CtValue1Updated),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheck{Service}TagExists(ctx, t, resourceName),
-					resource.TestCheckResourceAttr(resourceName, "key", "key1"),
-					resource.TestCheckResourceAttr(resourceName, "value", "value1updated"),
+					resource.TestCheckResourceAttr(resourceName, names.AttrKey, acctest.CtKey1),
+					resource.TestCheckResourceAttr(resourceName, names.AttrValue, acctest.CtValue1Updated),
 				),
 			},
 		},
