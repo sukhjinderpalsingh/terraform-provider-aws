@@ -185,7 +185,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/networkflowmonitor v1.11.6
 	github.com/aws/aws-sdk-go-v2/service/networkmanager v1.41.5
 	github.com/aws/aws-sdk-go-v2/service/networkmonitor v1.13.10
-	github.com/aws/aws-sdk-go-v2/service/notifications v1.7.16
+	github.com/aws/aws-sdk-go-v2/service/notifications v1.7.17
 	github.com/aws/aws-sdk-go-v2/service/notificationscontacts v1.5.19
 	github.com/aws/aws-sdk-go-v2/service/oam v1.23.11
 	github.com/aws/aws-sdk-go-v2/service/observabilityadmin v1.9.2
