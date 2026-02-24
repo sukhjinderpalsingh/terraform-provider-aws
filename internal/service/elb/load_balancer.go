@@ -321,7 +321,8 @@ func resourceLoadBalancerCreate(ctx context.Context, d *schema.ResourceData, met
 
 func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
-	conn := meta.(*conns.AWSClient).ELBClient(ctx)
+	awsClient := meta.(*conns.AWSClient)
+	conn := awsClient.ELBClient(ctx)
 
 	lb, err := findLoadBalancerByName(ctx, conn, d.Id())
 
@@ -341,11 +342,31 @@ func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, meta 
 		return sdkdiag.AppendErrorf(diags, "reading ELB Classic Load Balancer (%s) attributes: %s", d.Id(), err)
 	}
 
+	if err := resourceLoadBalancerFlatten(ctx, awsClient, lb, lbAttrs, d); err != nil {
+		return sdkdiag.AppendFromErr(diags, err)
+	}
+
+	if lb.SourceSecurityGroup != nil {
+		// Manually look up the ELB Security Group ID, since it's not provided
+		if lb.VPCId != nil {
+			sg, err := tfec2.FindSecurityGroupByNameAndVPCIDAndOwnerID(ctx, awsClient.EC2Client(ctx), aws.ToString(lb.SourceSecurityGroup.GroupName), aws.ToString(lb.VPCId), aws.ToString(lb.SourceSecurityGroup.OwnerAlias))
+			if err != nil {
+				return sdkdiag.AppendErrorf(diags, "reading ELB Classic Load Balancer (%s) security group: %s", d.Id(), err)
+			} else {
+				d.Set("source_security_group_id", sg.GroupId)
+			}
+		}
+	}
+
+	return diags
+}
+
+func resourceLoadBalancerFlatten(ctx context.Context, awsClient *conns.AWSClient, lb *awstypes.LoadBalancerDescription, lbAttrs *awstypes.LoadBalancerAttributes, d *schema.ResourceData) error {
 	arn := arn.ARN{
-		Partition: meta.(*conns.AWSClient).Partition(ctx),
-		Region:    meta.(*conns.AWSClient).Region(ctx),
+		Partition: awsClient.Partition(ctx),
+		Region:    awsClient.Region(ctx),
 		Service:   "elasticloadbalancing",
-		AccountID: meta.(*conns.AWSClient).AccountID(ctx),
+		AccountID: awsClient.AccountID(ctx),
 		Resource:  "loadbalancer/" + d.Id(),
 	}
 	d.Set(names.AttrARN, arn.String())
@@ -376,16 +397,6 @@ func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, meta 
 			group = aws.String(v + "/" + aws.ToString(lb.SourceSecurityGroup.GroupName))
 		}
 		d.Set("source_security_group", group)
-
-		// Manually look up the ELB Security Group ID, since it's not provided
-		if lb.VPCId != nil {
-			sg, err := tfec2.FindSecurityGroupByNameAndVPCIDAndOwnerID(ctx, meta.(*conns.AWSClient).EC2Client(ctx), aws.ToString(lb.SourceSecurityGroup.GroupName), aws.ToString(lb.VPCId), aws.ToString(lb.SourceSecurityGroup.OwnerAlias))
-			if err != nil {
-				return sdkdiag.AppendErrorf(diags, "reading ELB Classic Load Balancer (%s) security group: %s", d.Id(), err)
-			} else {
-				d.Set("source_security_group_id", sg.GroupId)
-			}
-		}
 	}
 
 	if lbAttrs.AccessLog != nil {
@@ -408,7 +419,7 @@ func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, meta 
 			accessLog = nil
 		}
 		if err := d.Set("access_logs", flattenAccessLog(accessLog)); err != nil {
-			return sdkdiag.AppendErrorf(diags, "setting access_logs: %s", err)
+			return fmt.Errorf("setting access_logs: %w", err)
 		}
 	}
 
@@ -423,11 +434,11 @@ func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, meta 
 	// currently can
 	if aws.ToString(lb.HealthCheck.Target) != "" {
 		if err := d.Set(names.AttrHealthCheck, flattenHealthCheck(lb.HealthCheck)); err != nil {
-			return sdkdiag.AppendErrorf(diags, "setting health_check: %s", err)
+			return fmt.Errorf("setting health_check: %w", err)
 		}
 	}
 
-	return diags
+	return nil
 }
 
 func resourceLoadBalancerUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
