@@ -15,6 +15,7 @@ ENHANCEMENTS:
 * resource/aws_bedrockagentcore_gateway_target: Add `metadata_configuration` block for HTTP header and query parameter propagation ([#45808](https://github.com/hashicorp/terraform-provider-aws/issues/45808))
 * resource/aws_bedrockagentcore_oauth2_credential_provider: Add tagging support ([#46590](https://github.com/hashicorp/terraform-provider-aws/issues/46590))
 * resource/aws_ecs_service: Add `service_connect_configuration.access_log_configuration` argument ([#45820](https://github.com/hashicorp/terraform-provider-aws/issues/45820))
+* resource/aws_ecs_service: Add resource identity support ([#46644](https://github.com/hashicorp/terraform-provider-aws/issues/46644))
 * resource/aws_eip_domain_name: Add import support ([#46582](https://github.com/hashicorp/terraform-provider-aws/issues/46582))
 * resource/aws_grafana_workspace: Add `kms_key_id` argument ([#46584](https://github.com/hashicorp/terraform-provider-aws/issues/46584))
 * resource/aws_instance: Allow `cpu_options.core_count`, `cpu_options.nested_virtualization`, and `cpu_options.threads_per_core` to be updated in-place ([#46568](https://github.com/hashicorp/terraform-provider-aws/issues/46568))
@@ -24,6 +25,7 @@ ENHANCEMENTS:
 BUG FIXES:
 
 * data-source/aws_dms_endpoint: Add missing `mongodb_settings.use_update_lookup` attribute to fix "invalid address to set" error ([#46616](https://github.com/hashicorp/terraform-provider-aws/issues/46616))
+* data-source/aws_iam_policy_document: Fix crash when `statement.principals.identifiers` contains a non-string value ([#46226](https://github.com/hashicorp/terraform-provider-aws/issues/46226))
 * list-resource/aws_s3_object: Includes parent bucket in display name. ([#46596](https://github.com/hashicorp/terraform-provider-aws/issues/46596))
 * resource/aws_autoscaling_group: Fix `couldn't find resource (21 retries)` errors updating `load_balancers`, `target_group_arns`, and `traffic_source` ([#46622](https://github.com/hashicorp/terraform-provider-aws/issues/46622))
 * resource/aws_bedrockagentcore_gateway_target: Add `credential_provider_configuration.oauth.default_return_url` and `credential_provider_configuration.oauth.grant_type` arguments ([#46127](https://github.com/hashicorp/terraform-provider-aws/issues/46127))
