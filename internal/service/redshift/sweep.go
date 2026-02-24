@@ -45,9 +45,16 @@ func sweepClusterSnapshots(ctx context.Context, client *conns.AWSClient) ([]swee
 		}
 
 		for _, v := range page.Snapshots {
+			id := aws.ToString(v.SnapshotIdentifier)
+
+			if typ := aws.ToString(v.SnapshotType); typ != "manual" {
+				log.Printf("[INFO] Skipping Redshift Cluster Snapshot %s: SnapshotType=%s", id, typ)
+				continue
+			}
+
 			r := resourceClusterSnapshot()
 			d := r.Data(nil)
-			d.SetId(aws.ToString(v.SnapshotIdentifier))
+			d.SetId(id)
 
 			sweepResources = append(sweepResources, sweep.NewSweepResource(r, d, client))
 		}
