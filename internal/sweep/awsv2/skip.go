@@ -5,6 +5,7 @@ package awsv2
 
 import (
 	"net"
+	"net/http"
 
 	"github.com/hashicorp/aws-sdk-go-base/v2/tfawserr"
 	"github.com/hashicorp/terraform-provider-aws/internal/errs"
@@ -16,6 +17,11 @@ func SkipSweepError(err error) bool {
 	// Ignore missing API endpoints
 	if dnsErr, ok := errs.As[*net.DNSError](err); ok {
 		return dnsErr.IsNotFound
+	}
+
+	// Example (lexmodels): https response error StatusCode: 503, RequestID: , api error UnknownError: UnknownError
+	if tfawserr.ErrHTTPStatusCodeEquals(err, http.StatusServiceUnavailable) {
+		return true
 	}
 
 	// Example: AccessDenied: The operation ListQueryLoggingConfigs is not available for the current AWS account ...
