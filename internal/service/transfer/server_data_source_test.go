@@ -1,4 +1,4 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package transfer_test
@@ -18,7 +18,7 @@ func testAccServerDataSource_basic(t *testing.T) {
 	resourceName := "aws_transfer_server.test"
 	datasourceName := "data.aws_transfer_server.test"
 
-	resource.Test(t, resource.TestCase{
+	acctest.Test(ctx, t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(ctx, t); testAccPreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.TransferServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
@@ -46,7 +46,7 @@ func testAccServerDataSource_Service_managed(t *testing.T) {
 	resourceName := "aws_transfer_server.test"
 	datasourceName := "data.aws_transfer_server.test"
 
-	resource.Test(t, resource.TestCase{
+	acctest.Test(ctx, t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(ctx, t); testAccPreCheck(ctx, t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.TransferServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
@@ -76,7 +76,7 @@ func testAccServerDataSource_apigateway(t *testing.T) {
 	resourceName := "aws_transfer_server.test"
 	datasourceName := "data.aws_transfer_server.test"
 
-	resource.Test(t, resource.TestCase{
+	acctest.Test(ctx, t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(ctx, t); testAccPreCheck(ctx, t); acctest.PreCheckAPIGatewayTypeEDGE(t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.TransferServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
@@ -260,7 +260,7 @@ data "aws_region" "current" {}
 
 resource "aws_transfer_server" "test" {
   identity_provider_type = "API_GATEWAY"
-  url                    = "https://${aws_api_gateway_rest_api.test.id}.execute-api.${data.aws_region.current.name}.amazonaws.com${aws_api_gateway_resource.test.path}"
+  url                    = "https://${aws_api_gateway_rest_api.test.id}.execute-api.${data.aws_region.current.region}.amazonaws.com${aws_api_gateway_resource.test.path}"
   invocation_role        = aws_iam_role.test.arn
   logging_role           = aws_iam_role.test.arn
 }

@@ -1,5 +1,7 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
+
+// DONOTCOPY: Copying old resources spreads bad habits. Use skaff instead.
 
 package qbusiness
 
@@ -21,7 +23,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-provider-aws/internal/create"
 	"github.com/hashicorp/terraform-provider-aws/internal/enum"
 	"github.com/hashicorp/terraform-provider-aws/internal/errs"
@@ -29,6 +30,7 @@ import (
 	"github.com/hashicorp/terraform-provider-aws/internal/framework"
 	fwflex "github.com/hashicorp/terraform-provider-aws/internal/framework/flex"
 	fwtypes "github.com/hashicorp/terraform-provider-aws/internal/framework/types"
+	"github.com/hashicorp/terraform-provider-aws/internal/retry"
 	tftags "github.com/hashicorp/terraform-provider-aws/internal/tags"
 	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
 	"github.com/hashicorp/terraform-provider-aws/names"
@@ -36,8 +38,8 @@ import (
 
 // @FrameworkResource("aws_qbusiness_application", name="Application")
 // @Tags(identifierAttribute="arn")
-func newResourceApplication(_ context.Context) (resource.ResourceWithConfigure, error) {
-	r := &resourceApplication{}
+func newApplicationResource(_ context.Context) (resource.ResourceWithConfigure, error) {
+	r := &applicationResource{}
 
 	r.SetDefaultCreateTimeout(30 * time.Minute)
 	r.SetDefaultUpdateTimeout(30 * time.Minute)
@@ -50,13 +52,13 @@ const (
 	ResNameApplication = "Application"
 )
 
-type resourceApplication struct {
-	framework.ResourceWithConfigure
+type applicationResource struct {
+	framework.ResourceWithModel[applicationResourceModel]
 	framework.WithImportByID
 	framework.WithTimeouts
 }
 
-func (r *resourceApplication) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *applicationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			names.AttrARN: framework.ARNAttributeComputedOnly(),
@@ -136,8 +138,8 @@ func (r *resourceApplication) Schema(ctx context.Context, req resource.SchemaReq
 	}
 }
 
-func (r *resourceApplication) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data resourceApplicationData
+func (r *applicationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data applicationResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -191,8 +193,8 @@ func (r *resourceApplication) Create(ctx context.Context, req resource.CreateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *resourceApplication) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data resourceApplicationData
+func (r *applicationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data applicationResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -201,7 +203,7 @@ func (r *resourceApplication) Read(ctx context.Context, req resource.ReadRequest
 	conn := r.Meta().QBusinessClient(ctx)
 
 	out, err := findApplicationByID(ctx, conn, data.ApplicationId.ValueString())
-	if tfresource.NotFound(err) {
+	if retry.NotFound(err) {
 		resp.Diagnostics.Append(fwdiag.NewResourceNotFoundWarningDiagnostic(err))
 		resp.State.RemoveResource(ctx)
 		return
@@ -222,8 +224,8 @@ func (r *resourceApplication) Read(ctx context.Context, req resource.ReadRequest
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *resourceApplication) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var state, plan resourceApplicationData
+func (r *applicationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var state, plan applicationResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -281,8 +283,8 @@ func (r *resourceApplication) Update(ctx context.Context, req resource.UpdateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-func (r *resourceApplication) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data resourceApplicationData
+func (r *applicationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data applicationResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -315,10 +317,6 @@ func (r *resourceApplication) Delete(ctx context.Context, req resource.DeleteReq
 	}
 }
 
-func (r *resourceApplication) ModifyPlan(ctx context.Context, request resource.ModifyPlanRequest, response *resource.ModifyPlanResponse) {
-	r.SetTagsAll(ctx, request, response)
-}
-
 func findApplicationByID(ctx context.Context, conn *qbusiness.Client, id string) (*qbusiness.GetApplicationOutput, error) {
 	input := &qbusiness.GetApplicationInput{
 		ApplicationId: aws.String(id),
@@ -327,8 +325,7 @@ func findApplicationByID(ctx context.Context, conn *qbusiness.Client, id string)
 	output, err := conn.GetApplication(ctx, input)
 	if errs.IsA[*awstypes.ResourceNotFoundException](err) {
 		return nil, &retry.NotFoundError{
-			LastError:   err,
-			LastRequest: input,
+			LastError: err,
 		}
 	}
 
@@ -337,17 +334,17 @@ func findApplicationByID(ctx context.Context, conn *qbusiness.Client, id string)
 	}
 
 	if output == nil {
-		return nil, tfresource.NewEmptyResultError(input)
+		return nil, tfresource.NewEmptyResultError()
 	}
 
 	return output, nil
 }
 
-func statusApplication(ctx context.Context, conn *qbusiness.Client, id string) retry.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+func statusApplication(conn *qbusiness.Client, id string) retry.StateRefreshFunc {
+	return func(ctx context.Context) (any, string, error) {
 		output, err := findApplicationByID(ctx, conn, id)
 
-		if tfresource.NotFound(err) {
+		if retry.NotFound(err) {
 			return nil, "", nil
 		}
 
@@ -363,7 +360,7 @@ func waitApplicationActive(ctx context.Context, conn *qbusiness.Client, id strin
 	stateConf := &retry.StateChangeConf{
 		Pending:    enum.Slice(awstypes.ApplicationStatusCreating, awstypes.ApplicationStatusUpdating),
 		Target:     enum.Slice(awstypes.ApplicationStatusActive),
-		Refresh:    statusApplication(ctx, conn, id),
+		Refresh:    statusApplication(conn, id),
 		Timeout:    timeout,
 		MinTimeout: 10 * time.Second,
 	}
@@ -371,7 +368,7 @@ func waitApplicationActive(ctx context.Context, conn *qbusiness.Client, id strin
 	outputRaw, err := stateConf.WaitForStateContext(ctx)
 
 	if output, ok := outputRaw.(*qbusiness.GetApplicationOutput); ok {
-		tfresource.SetLastError(err, errors.New(string(output.Status)))
+		retry.SetLastError(err, errors.New(string(output.Status)))
 
 		return output, err
 	}
@@ -382,7 +379,7 @@ func waitApplicationDeleted(ctx context.Context, conn *qbusiness.Client, id stri
 	stateConf := &retry.StateChangeConf{
 		Pending:    enum.Slice(awstypes.ApplicationStatusActive, awstypes.ApplicationStatusDeleting),
 		Target:     []string{},
-		Refresh:    statusApplication(ctx, conn, id),
+		Refresh:    statusApplication(conn, id),
 		Timeout:    timeout,
 		MinTimeout: 10 * time.Second,
 	}
@@ -390,14 +387,15 @@ func waitApplicationDeleted(ctx context.Context, conn *qbusiness.Client, id stri
 	outputRaw, err := stateConf.WaitForStateContext(ctx)
 
 	if output, ok := outputRaw.(*qbusiness.GetApplicationOutput); ok {
-		tfresource.SetLastError(err, errors.New(string(output.Status)))
+		retry.SetLastError(err, errors.New(string(output.Status)))
 
 		return output, err
 	}
 	return nil, err
 }
 
-type resourceApplicationData struct {
+type applicationResourceModel struct {
+	framework.WithRegionModel
 	ApplicationId                types.String                                                  `tfsdk:"id"`
 	ApplicationArn               types.String                                                  `tfsdk:"arn"`
 	AttachmentsConfiguration     fwtypes.ListNestedObjectValueOf[attachmentsConfigurationData] `tfsdk:"attachments_configuration"`

@@ -1,5 +1,7 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
+
+// DONOTCOPY: Copying old resources spreads bad habits. Use skaff instead.
 
 package route53
 
@@ -25,6 +27,7 @@ import (
 	"github.com/hashicorp/terraform-provider-aws/internal/errs/fwdiag"
 	"github.com/hashicorp/terraform-provider-aws/internal/framework"
 	fwflex "github.com/hashicorp/terraform-provider-aws/internal/framework/flex"
+	"github.com/hashicorp/terraform-provider-aws/internal/retry"
 	tfslices "github.com/hashicorp/terraform-provider-aws/internal/slices"
 	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
 	"github.com/hashicorp/terraform-provider-aws/names"
@@ -38,7 +41,7 @@ func newCIDRCollectionResource(context.Context) (resource.ResourceWithConfigure,
 }
 
 type cidrCollectionResource struct {
-	framework.ResourceWithConfigure
+	framework.ResourceWithModel[cidrCollectionResourceModel]
 	framework.WithNoUpdate
 	framework.WithImportByID
 }
@@ -83,7 +86,7 @@ func (r *cidrCollectionResource) Create(ctx context.Context, request resource.Cr
 	const (
 		timeout = 2 * time.Minute
 	)
-	outputRaw, err := tfresource.RetryWhenIsA[*awstypes.ConcurrentModification](ctx, timeout, func() (interface{}, error) {
+	outputRaw, err := tfresource.RetryWhenIsA[any, *awstypes.ConcurrentModification](ctx, timeout, func(ctx context.Context) (any, error) {
 		return conn.CreateCidrCollection(ctx, input)
 	})
 
@@ -112,7 +115,7 @@ func (r *cidrCollectionResource) Read(ctx context.Context, request resource.Read
 
 	output, err := findCIDRCollectionByID(ctx, conn, data.ID.ValueString())
 
-	if tfresource.NotFound(err) {
+	if retry.NotFound(err) {
 		response.Diagnostics.Append(fwdiag.NewResourceNotFoundWarningDiagnostic(err))
 		response.State.RemoveResource(ctx)
 
@@ -141,7 +144,7 @@ func (r *cidrCollectionResource) Delete(ctx context.Context, request resource.De
 
 	conn := r.Meta().Route53Client(ctx)
 
-	tflog.Debug(ctx, "deleting Route 53 CIDR Collection", map[string]interface{}{
+	tflog.Debug(ctx, "deleting Route 53 CIDR Collection", map[string]any{
 		names.AttrID: data.ID.ValueString(),
 	})
 

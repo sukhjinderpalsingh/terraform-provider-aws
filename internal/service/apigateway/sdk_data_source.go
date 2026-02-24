@@ -1,5 +1,7 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
+
+// DONOTCOPY: Copying old resources spreads bad habits. Use skaff instead.
 
 package apigateway
 
@@ -57,7 +59,7 @@ func dataSourceSDK() *schema.Resource {
 	}
 }
 
-func dataSourceSDKRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceSDKRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).APIGatewayClient(ctx)
 
@@ -70,8 +72,8 @@ func dataSourceSDKRead(ctx context.Context, d *schema.ResourceData, meta interfa
 		StageName: aws.String(stageName),
 	}
 
-	if v, ok := d.GetOk(names.AttrParameters); ok && len(v.(map[string]interface{})) > 0 {
-		input.Parameters = flex.ExpandStringValueMap(v.(map[string]interface{}))
+	if v, ok := d.GetOk(names.AttrParameters); ok && len(v.(map[string]any)) > 0 {
+		input.Parameters = flex.ExpandStringValueMap(v.(map[string]any))
 	}
 
 	id := apiID + ":" + stageName + ":" + sdkType

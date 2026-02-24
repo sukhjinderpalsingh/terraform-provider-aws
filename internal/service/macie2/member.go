@@ -1,5 +1,7 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
+
+// DONOTCOPY: Copying old resources spreads bad habits. Use skaff instead.
 
 package macie2
 
@@ -14,16 +16,15 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/macie2"
 	awstypes "github.com/aws/aws-sdk-go-v2/service/macie2/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-aws/internal/conns"
 	"github.com/hashicorp/terraform-provider-aws/internal/enum"
 	"github.com/hashicorp/terraform-provider-aws/internal/errs"
 	"github.com/hashicorp/terraform-provider-aws/internal/errs/sdkdiag"
+	"github.com/hashicorp/terraform-provider-aws/internal/retry"
 	tfslices "github.com/hashicorp/terraform-provider-aws/internal/slices"
 	tftags "github.com/hashicorp/terraform-provider-aws/internal/tags"
 	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
-	"github.com/hashicorp/terraform-provider-aws/internal/verify"
 	"github.com/hashicorp/terraform-provider-aws/names"
 )
 
@@ -98,8 +99,6 @@ func resourceMember() *schema.Resource {
 			},
 		},
 
-		CustomizeDiff: verify.SetTagsDiff,
-
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(4 * time.Minute),
 			Update: schema.DefaultTimeout(4 * time.Minute),
@@ -107,7 +106,7 @@ func resourceMember() *schema.Resource {
 	}
 }
 
-func resourceMemberCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMemberCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).Macie2Client(ctx)
 
@@ -120,7 +119,7 @@ func resourceMemberCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		Tags: getTagsIn(ctx),
 	}
 
-	_, err := tfresource.RetryWhenAWSErrCodeEquals(ctx, d.Timeout(schema.TimeoutCreate), func() (interface{}, error) {
+	_, err := tfresource.RetryWhenAWSErrCodeEquals(ctx, d.Timeout(schema.TimeoutCreate), func(ctx context.Context) (any, error) {
 		return conn.CreateMember(ctx, &input)
 	}, errCodeClientError)
 
@@ -139,13 +138,13 @@ func resourceMemberCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	return append(diags, resourceMemberRead(ctx, d, meta)...)
 }
 
-func resourceMemberRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMemberRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).Macie2Client(ctx)
 
 	output, err := findMemberByID(ctx, conn, d.Id())
 
-	if !d.IsNewResource() && tfresource.NotFound(err) {
+	if !d.IsNewResource() && retry.NotFound(err) {
 		log.Printf("[WARN] Macie Member (%s) not found, removing from state", d.Id())
 		d.SetId("")
 		return diags
@@ -183,7 +182,7 @@ func resourceMemberRead(ctx context.Context, d *schema.ResourceData, meta interf
 	return diags
 }
 
-func resourceMemberUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMemberUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).Macie2Client(ctx)
 
@@ -221,7 +220,7 @@ func resourceMemberUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	return append(diags, resourceMemberRead(ctx, d, meta)...)
 }
 
-func resourceMemberDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMemberDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).Macie2Client(ctx)
 
@@ -253,7 +252,7 @@ func inviteMember(ctx context.Context, conn *macie2.Client, d *schema.ResourceDa
 		input.Message = aws.String(v.(string))
 	}
 
-	outputRaw, err := tfresource.RetryWhenAWSErrCodeEquals(ctx, timeout, func() (interface{}, error) {
+	outputRaw, err := tfresource.RetryWhenAWSErrCodeEquals(ctx, timeout, func(ctx context.Context) (any, error) {
 		return conn.CreateInvitations(ctx, &input)
 	}, errCodeClientError)
 
@@ -268,7 +267,7 @@ func inviteMember(ctx context.Context, conn *macie2.Client, d *schema.ResourceDa
 	}
 
 	if _, err := waitMemberInvited(ctx, conn, d.Id()); err != nil {
-		return fmt.Errorf("waiting for Macie Member (%s) invite: %s", d.Id(), err)
+		return fmt.Errorf("waiting for Macie Member (%s) invite: %w", d.Id(), err)
 	}
 
 	return nil
@@ -283,8 +282,7 @@ func findMemberByID(ctx context.Context, conn *macie2.Client, id string) (*macie
 
 	if isMemberNotFoundError(err) {
 		return nil, &retry.NotFoundError{
-			LastError:   err,
-			LastRequest: input,
+			LastError: err,
 		}
 	}
 
@@ -293,7 +291,7 @@ func findMemberByID(ctx context.Context, conn *macie2.Client, id string) (*macie
 	}
 
 	if output == nil {
-		return nil, tfresource.NewEmptyResultError(input)
+		return nil, tfresource.NewEmptyResultError()
 	}
 
 	return output, nil
@@ -340,11 +338,11 @@ func findMembers(ctx context.Context, conn *macie2.Client, input *macie2.ListMem
 	return output, nil
 }
 
-func statusMemberRelationship(ctx context.Context, conn *macie2.Client, adminAccountID string) retry.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+func statusMemberRelationship(conn *macie2.Client, adminAccountID string) retry.StateRefreshFunc {
+	return func(ctx context.Context) (any, string, error) {
 		output, err := findMemberNotAssociated(ctx, conn, adminAccountID)
 
-		if tfresource.NotFound(err) {
+		if retry.NotFound(err) {
 			return nil, "", nil
 		}
 
@@ -363,7 +361,7 @@ func waitMemberInvited(ctx context.Context, conn *macie2.Client, adminAccountID 
 	stateConf := &retry.StateChangeConf{
 		Pending: enum.Slice(awstypes.RelationshipStatusCreated, awstypes.RelationshipStatusEmailVerificationInProgress),
 		Target:  enum.Slice(awstypes.RelationshipStatusInvited, awstypes.RelationshipStatusEnabled, awstypes.RelationshipStatusPaused),
-		Refresh: statusMemberRelationship(ctx, conn, adminAccountID),
+		Refresh: statusMemberRelationship(conn, adminAccountID),
 		Timeout: timeout,
 	}
 

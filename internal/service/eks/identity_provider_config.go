@@ -1,5 +1,7 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
+
+// DONOTCOPY: Copying old resources spreads bad habits. Use skaff instead.
 
 package eks
 
@@ -13,7 +15,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/eks/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-aws/internal/conns"
@@ -21,9 +22,9 @@ import (
 	"github.com/hashicorp/terraform-provider-aws/internal/errs"
 	"github.com/hashicorp/terraform-provider-aws/internal/errs/sdkdiag"
 	"github.com/hashicorp/terraform-provider-aws/internal/flex"
+	"github.com/hashicorp/terraform-provider-aws/internal/retry"
 	tftags "github.com/hashicorp/terraform-provider-aws/internal/tags"
 	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
-	"github.com/hashicorp/terraform-provider-aws/internal/verify"
 	"github.com/hashicorp/terraform-provider-aws/names"
 )
 
@@ -39,8 +40,6 @@ func resourceIdentityProviderConfig() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
-
-		CustomizeDiff: verify.SetTagsDiff,
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(40 * time.Minute),
@@ -130,13 +129,13 @@ func resourceIdentityProviderConfig() *schema.Resource {
 	}
 }
 
-func resourceIdentityProviderConfigCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIdentityProviderConfigCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	conn := meta.(*conns.AWSClient).EKSClient(ctx)
 
 	clusterName := d.Get(names.AttrClusterName).(string)
-	configName, oidc := expandOIDCIdentityProviderConfigRequest(d.Get("oidc").([]interface{})[0].(map[string]interface{}))
+	configName, oidc := expandOIDCIdentityProviderConfigRequest(d.Get("oidc").([]any)[0].(map[string]any))
 	idpID := IdentityProviderConfigCreateResourceID(clusterName, configName)
 	input := &eks.AssociateIdentityProviderConfigInput{
 		ClientRequestToken: aws.String(id.UniqueId()),
@@ -160,7 +159,7 @@ func resourceIdentityProviderConfigCreate(ctx context.Context, d *schema.Resourc
 	return append(diags, resourceIdentityProviderConfigRead(ctx, d, meta)...)
 }
 
-func resourceIdentityProviderConfigRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIdentityProviderConfigRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	conn := meta.(*conns.AWSClient).EKSClient(ctx)
@@ -172,7 +171,7 @@ func resourceIdentityProviderConfigRead(ctx context.Context, d *schema.ResourceD
 
 	oidc, err := findOIDCIdentityProviderConfigByTwoPartKey(ctx, conn, clusterName, configName)
 
-	if !d.IsNewResource() && tfresource.NotFound(err) {
+	if !d.IsNewResource() && retry.NotFound(err) {
 		log.Printf("[WARN] EKS Identity Provider Config (%s) not found, removing from state", d.Id())
 		d.SetId("")
 		return diags
@@ -184,7 +183,7 @@ func resourceIdentityProviderConfigRead(ctx context.Context, d *schema.ResourceD
 
 	d.Set(names.AttrARN, oidc.IdentityProviderConfigArn)
 	d.Set(names.AttrClusterName, oidc.ClusterName)
-	if err := d.Set("oidc", []interface{}{flattenOIDCIdentityProviderConfig(oidc)}); err != nil {
+	if err := d.Set("oidc", []any{flattenOIDCIdentityProviderConfig(oidc)}); err != nil {
 		return sdkdiag.AppendErrorf(diags, "setting oidc: %s", err)
 	}
 	d.Set(names.AttrStatus, oidc.Status)
@@ -194,12 +193,12 @@ func resourceIdentityProviderConfigRead(ctx context.Context, d *schema.ResourceD
 	return diags
 }
 
-func resourceIdentityProviderConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIdentityProviderConfigUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	// Tags only.
 	return resourceIdentityProviderConfigRead(ctx, d, meta)
 }
 
-func resourceIdentityProviderConfigDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIdentityProviderConfigDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	conn := meta.(*conns.AWSClient).EKSClient(ctx)
@@ -250,8 +249,7 @@ func findOIDCIdentityProviderConfigByTwoPartKey(ctx context.Context, conn *eks.C
 
 	if errs.IsA[*types.ResourceNotFoundException](err) {
 		return nil, &retry.NotFoundError{
-			LastError:   err,
-			LastRequest: input,
+			LastError: err,
 		}
 	}
 
@@ -260,17 +258,17 @@ func findOIDCIdentityProviderConfigByTwoPartKey(ctx context.Context, conn *eks.C
 	}
 
 	if output == nil || output.IdentityProviderConfig == nil || output.IdentityProviderConfig.Oidc == nil {
-		return nil, tfresource.NewEmptyResultError(input)
+		return nil, tfresource.NewEmptyResultError()
 	}
 
 	return output.IdentityProviderConfig.Oidc, nil
 }
 
-func statusOIDCIdentityProviderConfig(ctx context.Context, conn *eks.Client, clusterName, configName string) retry.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+func statusOIDCIdentityProviderConfig(conn *eks.Client, clusterName, configName string) retry.StateRefreshFunc {
+	return func(ctx context.Context) (any, string, error) {
 		output, err := findOIDCIdentityProviderConfigByTwoPartKey(ctx, conn, clusterName, configName)
 
-		if tfresource.NotFound(err) {
+		if retry.NotFound(err) {
 			return nil, "", nil
 		}
 
@@ -286,7 +284,7 @@ func waitOIDCIdentityProviderConfigCreated(ctx context.Context, conn *eks.Client
 	stateConf := retry.StateChangeConf{
 		Pending: enum.Slice(types.ConfigStatusCreating),
 		Target:  enum.Slice(types.ConfigStatusActive),
-		Refresh: statusOIDCIdentityProviderConfig(ctx, conn, clusterName, configName),
+		Refresh: statusOIDCIdentityProviderConfig(conn, clusterName, configName),
 		Timeout: timeout,
 	}
 
@@ -303,7 +301,7 @@ func waitOIDCIdentityProviderConfigDeleted(ctx context.Context, conn *eks.Client
 	stateConf := retry.StateChangeConf{
 		Pending: enum.Slice(types.ConfigStatusActive, types.ConfigStatusDeleting),
 		Target:  []string{},
-		Refresh: statusOIDCIdentityProviderConfig(ctx, conn, clusterName, configName),
+		Refresh: statusOIDCIdentityProviderConfig(conn, clusterName, configName),
 		Timeout: timeout,
 	}
 
@@ -316,7 +314,7 @@ func waitOIDCIdentityProviderConfigDeleted(ctx context.Context, conn *eks.Client
 	return nil, err
 }
 
-func expandOIDCIdentityProviderConfigRequest(tfMap map[string]interface{}) (string, *types.OidcIdentityProviderConfigRequest) {
+func expandOIDCIdentityProviderConfigRequest(tfMap map[string]any) (string, *types.OidcIdentityProviderConfigRequest) {
 	if tfMap == nil {
 		return "", nil
 	}
@@ -345,7 +343,7 @@ func expandOIDCIdentityProviderConfigRequest(tfMap map[string]interface{}) (stri
 		apiObject.IssuerUrl = aws.String(v)
 	}
 
-	if v, ok := tfMap["required_claims"].(map[string]interface{}); ok && len(v) > 0 {
+	if v, ok := tfMap["required_claims"].(map[string]any); ok && len(v) > 0 {
 		apiObject.RequiredClaims = flex.ExpandStringValueMap(v)
 	}
 
@@ -360,12 +358,12 @@ func expandOIDCIdentityProviderConfigRequest(tfMap map[string]interface{}) (stri
 	return identityProviderConfigName, apiObject
 }
 
-func flattenOIDCIdentityProviderConfig(apiObject *types.OidcIdentityProviderConfig) map[string]interface{} {
+func flattenOIDCIdentityProviderConfig(apiObject *types.OidcIdentityProviderConfig) map[string]any {
 	if apiObject == nil {
 		return nil
 	}
 
-	tfMap := map[string]interface{}{}
+	tfMap := map[string]any{}
 
 	if v := apiObject.ClientId; v != nil {
 		tfMap[names.AttrClientID] = aws.ToString(v)

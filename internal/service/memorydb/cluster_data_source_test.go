@@ -1,4 +1,4 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package memorydb_test
@@ -19,7 +19,7 @@ func TestAccMemoryDBClusterDataSource_basic(t *testing.T) {
 	resourceName := "aws_memorydb_cluster.test"
 	dataSourceName := "data.aws_memorydb_cluster.test"
 
-	resource.ParallelTest(t, resource.TestCase{
+	acctest.ParallelTest(ctx, t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(ctx, t); testAccPreCheck(t) },
 		ErrorCheck:               acctest.ErrorCheck(t, names.MemoryDBServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
@@ -81,7 +81,10 @@ resource "aws_security_group" "test" {
   vpc_id      = aws_vpc.test.id
 }
 
-resource "aws_kms_key" "test" {}
+resource "aws_kms_key" "test" {
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+}
 
 resource "aws_memorydb_cluster" "test" {
   acl_name                   = aws_memorydb_acl.test.id

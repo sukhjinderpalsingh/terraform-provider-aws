@@ -101,6 +101,7 @@ class MyConvertedCode extends TerraformStack {
 
 This data source supports the following arguments:
 
+* `region` - (Optional) Region where this resource will be [managed](https://docs.aws.amazon.com/general/latest/gr/rande.html#regional-endpoints). Defaults to the Region set in the [provider configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#aws-configuration-reference).
 * `bucket` - (Required) Name of the bucket to read the object from. Alternatively, an [S3 access point](https://docs.aws.amazon.com/AmazonS3/latest/dev/using-access-points.html) ARN can be specified
 * `checksumMode` - (Optional) To retrieve the object's checksum, this argument must be `ENABLED`. If you enable `checksumMode` and the object is encrypted with KMS, you must have permission to use the `kms:Decrypt` action. Valid values: `ENABLED`
 * `key` - (Required) Full path to the object inside the bucket
@@ -116,6 +117,7 @@ This data source exports the following attributes in addition to the arguments a
 * `cacheControl` - Caching behavior along the request/reply chain.
 * `checksumCrc32` - The base64-encoded, 32-bit CRC32 checksum of the object.
 * `checksumCrc32C` - The base64-encoded, 32-bit CRC32C checksum of the object.
+* `checksumCrc64Nvme` - The base64-encoded, 64-bit CRC64NVME checksum of the object.
 * `checksumSha1` - The base64-encoded, 160-bit SHA-1 digest of the object.
 * `checksumSha256` - The base64-encoded, 256-bit SHA-256 digest of the object.
 * `contentDisposition` - Presentational information for the object.
@@ -140,4 +142,4 @@ This data source exports the following attributes in addition to the arguments a
 
 -> **Note:** Terraform ignores all leading `/`s in the object's `key` and treats multiple `/`s in the rest of the object's `key` as a single `/`, so values of `/index.html` and `index.html` correspond to the same S3 object as do `first//second///third//` and `first/second/third/`.
 
-<!-- cache-key: cdktf-0.20.8 input-b70861b0b48ec1a4b093bceba4b7c0a75c68281bd67d8a291cd6aff116de1297 -->
+<!-- cache-key: cdktf-0.20.8 input-44ca16d8e18b450ebb7c59f6e21159a0a2ac617b2ff8fcbbab0ca9f62ee14b40 -->

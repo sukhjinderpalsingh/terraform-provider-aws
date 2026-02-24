@@ -1,5 +1,7 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
+
+// DONOTCOPY: Copying old resources spreads bad habits. Use skaff instead.
 
 package memorydb
 
@@ -15,7 +17,6 @@ import (
 	awstypes "github.com/aws/aws-sdk-go-v2/service/memorydb/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-aws/internal/conns"
@@ -24,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform-provider-aws/internal/errs"
 	"github.com/hashicorp/terraform-provider-aws/internal/errs/sdkdiag"
 	"github.com/hashicorp/terraform-provider-aws/internal/flex"
+	"github.com/hashicorp/terraform-provider-aws/internal/retry"
 	"github.com/hashicorp/terraform-provider-aws/internal/sdkv2"
 	tfslices "github.com/hashicorp/terraform-provider-aws/internal/slices"
 	tftags "github.com/hashicorp/terraform-provider-aws/internal/tags"
@@ -50,8 +52,6 @@ func resourceCluster() *schema.Resource {
 			Update: schema.DefaultTimeout(120 * time.Minute),
 			Delete: schema.DefaultTimeout(120 * time.Minute),
 		},
-
-		CustomizeDiff: verify.SetTagsDiff,
 
 		SchemaFunc: func() map[string]*schema.Schema {
 			return map[string]*schema.Schema{
@@ -289,11 +289,11 @@ func endpointSchema() *schema.Schema {
 	}
 }
 
-func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).MemoryDBClient(ctx)
 
-	name := create.Name(d.Get(names.AttrName).(string), d.Get(names.AttrNamePrefix).(string))
+	name := create.Name(ctx, d.Get(names.AttrName).(string), d.Get(names.AttrNamePrefix).(string))
 	input := memorydb.CreateClusterInput{
 		ACLName:                 aws.String(d.Get("acl_name").(string)),
 		AutoMinorVersionUpgrade: aws.Bool(d.Get(names.AttrAutoMinorVersionUpgrade).(bool)),
@@ -345,8 +345,8 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, meta int
 		input.SecurityGroupIds = flex.ExpandStringValueSet(v.(*schema.Set))
 	}
 
-	if v, ok := d.GetOk("snapshot_arns"); ok && len(v.([]interface{})) > 0 {
-		input.SnapshotArns = flex.ExpandStringValueList(v.([]interface{}))
+	if v, ok := d.GetOk("snapshot_arns"); ok && len(v.([]any)) > 0 {
+		input.SnapshotArns = flex.ExpandStringValueList(v.([]any))
 	}
 
 	if v, ok := d.GetOk("snapshot_name"); ok {
@@ -393,13 +393,13 @@ func resourceClusterCreate(ctx context.Context, d *schema.ResourceData, meta int
 	return append(diags, resourceClusterRead(ctx, d, meta)...)
 }
 
-func resourceClusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceClusterRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).MemoryDBClient(ctx)
 
 	cluster, err := findClusterByName(ctx, conn, d.Id())
 
-	if !d.IsNewResource() && tfresource.NotFound(err) {
+	if !d.IsNewResource() && retry.NotFound(err) {
 		log.Printf("[WARN] MemoryDB Cluster (%s) not found, removing from state", d.Id())
 		d.SetId("")
 		return diags
@@ -460,7 +460,7 @@ func resourceClusterRead(ctx context.Context, d *schema.ResourceData, meta inter
 	return diags
 }
 
-func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).MemoryDBClient(ctx)
 
@@ -572,7 +572,7 @@ func resourceClusterUpdate(ctx context.Context, d *schema.ResourceData, meta int
 	return append(diags, resourceClusterRead(ctx, d, meta)...)
 }
 
-func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceClusterDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).MemoryDBClient(ctx)
 
@@ -634,8 +634,7 @@ func findClusters(ctx context.Context, conn *memorydb.Client, input *memorydb.De
 
 		if errs.IsA[*awstypes.ClusterNotFoundFault](err) {
 			return nil, &retry.NotFoundError{
-				LastError:   err,
-				LastRequest: input,
+				LastError: err,
 			}
 		}
 
@@ -649,11 +648,11 @@ func findClusters(ctx context.Context, conn *memorydb.Client, input *memorydb.De
 	return output, nil
 }
 
-func statusCluster(ctx context.Context, conn *memorydb.Client, name string) retry.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+func statusCluster(conn *memorydb.Client, name string) retry.StateRefreshFunc {
+	return func(ctx context.Context) (any, string, error) {
 		output, err := findClusterByName(ctx, conn, name)
 
-		if tfresource.NotFound(err) {
+		if retry.NotFound(err) {
 			return nil, "", nil
 		}
 
@@ -665,11 +664,11 @@ func statusCluster(ctx context.Context, conn *memorydb.Client, name string) retr
 	}
 }
 
-func statusClusterParameterGroup(ctx context.Context, conn *memorydb.Client, name string) retry.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+func statusClusterParameterGroup(conn *memorydb.Client, name string) retry.StateRefreshFunc {
+	return func(ctx context.Context) (any, string, error) {
 		output, err := findClusterByName(ctx, conn, name)
 
-		if tfresource.NotFound(err) {
+		if retry.NotFound(err) {
 			return nil, "", nil
 		}
 
@@ -681,11 +680,11 @@ func statusClusterParameterGroup(ctx context.Context, conn *memorydb.Client, nam
 	}
 }
 
-func statusClusterSecurityGroups(ctx context.Context, conn *memorydb.Client, name string) retry.StateRefreshFunc {
-	return func() (interface{}, string, error) {
+func statusClusterSecurityGroups(conn *memorydb.Client, name string) retry.StateRefreshFunc {
+	return func(ctx context.Context) (any, string, error) {
 		output, err := findClusterByName(ctx, conn, name)
 
-		if tfresource.NotFound(err) {
+		if retry.NotFound(err) {
 			return nil, "", nil
 		}
 
@@ -709,7 +708,7 @@ func waitClusterAvailable(ctx context.Context, conn *memorydb.Client, name strin
 	stateConf := &retry.StateChangeConf{
 		Pending: []string{clusterStatusCreating, clusterStatusUpdating, clusterStatusSnapshotting},
 		Target:  []string{clusterStatusAvailable},
-		Refresh: statusCluster(ctx, conn, name),
+		Refresh: statusCluster(conn, name),
 		Timeout: timeout,
 	}
 
@@ -726,7 +725,7 @@ func waitClusterDeleted(ctx context.Context, conn *memorydb.Client, name string,
 	stateConf := &retry.StateChangeConf{
 		Pending:      []string{clusterStatusDeleting},
 		Target:       []string{},
-		Refresh:      statusCluster(ctx, conn, name),
+		Refresh:      statusCluster(conn, name),
 		Timeout:      timeout,
 		Delay:        5 * time.Minute,
 		PollInterval: 10 * time.Second,
@@ -748,7 +747,7 @@ func waitClusterParameterGroupInSync(ctx context.Context, conn *memorydb.Client,
 	stateConf := &retry.StateChangeConf{
 		Pending: []string{clusterParameterGroupStatusApplying},
 		Target:  []string{clusterParameterGroupStatusInSync},
-		Refresh: statusClusterParameterGroup(ctx, conn, name),
+		Refresh: statusClusterParameterGroup(conn, name),
 		Timeout: timeout,
 	}
 
@@ -768,7 +767,7 @@ func waitClusterSecurityGroupsActive(ctx context.Context, conn *memorydb.Client,
 	stateConf := &retry.StateChangeConf{
 		Pending: []string{clusterSecurityGroupStatusModifying},
 		Target:  []string{clusterSecurityGroupStatusActive},
-		Refresh: statusClusterSecurityGroups(ctx, conn, name),
+		Refresh: statusClusterSecurityGroups(conn, name),
 		Timeout: timeout,
 	}
 
@@ -786,12 +785,12 @@ var (
 	clusterShardNodeHash = sdkv2.SimpleSchemaSetFunc(names.AttrName)
 )
 
-func flattenEndpoint(apiObject *awstypes.Endpoint) []interface{} {
+func flattenEndpoint(apiObject *awstypes.Endpoint) []any {
 	if apiObject == nil {
-		return []interface{}{}
+		return []any{}
 	}
 
-	tfMap := map[string]interface{}{}
+	tfMap := map[string]any{}
 
 	if v := aws.ToString(apiObject.Address); v != "" {
 		tfMap[names.AttrAddress] = v
@@ -801,7 +800,7 @@ func flattenEndpoint(apiObject *awstypes.Endpoint) []interface{} {
 		tfMap[names.AttrPort] = apiObject.Port
 	}
 
-	return []interface{}{tfMap}
+	return []any{tfMap}
 }
 
 func flattenShards(apiObjects []awstypes.Shard) *schema.Set {
@@ -811,7 +810,7 @@ func flattenShards(apiObjects []awstypes.Shard) *schema.Set {
 		nodeSet := schema.NewSet(clusterShardNodeHash, nil)
 
 		for _, apiObject := range apiObject.Nodes {
-			nodeSet.Add(map[string]interface{}{
+			nodeSet.Add(map[string]any{
 				names.AttrAvailabilityZone: aws.ToString(apiObject.AvailabilityZone),
 				names.AttrCreateTime:       aws.ToTime(apiObject.CreateTime).Format(time.RFC3339),
 				names.AttrEndpoint:         flattenEndpoint(apiObject.Endpoint),
@@ -819,7 +818,7 @@ func flattenShards(apiObjects []awstypes.Shard) *schema.Set {
 			})
 		}
 
-		tfSet.Add(map[string]interface{}{
+		tfSet.Add(map[string]any{
 			names.AttrName: aws.ToString(apiObject.Name),
 			"num_nodes":    aws.ToInt32(apiObject.NumberOfNodes),
 			"nodes":        nodeSet,

@@ -1,5 +1,7 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
+
+// DONOTCOPY: Copying old resources spreads bad habits. Use skaff instead.
 
 package appintegrations
 
@@ -19,7 +21,6 @@ import (
 	"github.com/hashicorp/terraform-provider-aws/internal/errs"
 	"github.com/hashicorp/terraform-provider-aws/internal/errs/sdkdiag"
 	tftags "github.com/hashicorp/terraform-provider-aws/internal/tags"
-	"github.com/hashicorp/terraform-provider-aws/internal/verify"
 	"github.com/hashicorp/terraform-provider-aws/names"
 )
 
@@ -76,11 +77,10 @@ func resourceEventIntegration() *schema.Resource {
 			names.AttrTags:    tftags.TagsSchema(),
 			names.AttrTagsAll: tftags.TagsSchemaComputed(),
 		},
-		CustomizeDiff: verify.SetTagsDiff,
 	}
 }
 
-func resourceEventIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceEventIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	conn := meta.(*conns.AWSClient).AppIntegrationsClient(ctx)
@@ -89,7 +89,7 @@ func resourceEventIntegrationCreate(ctx context.Context, d *schema.ResourceData,
 	input := &appintegrations.CreateEventIntegrationInput{
 		ClientToken:    aws.String(id.UniqueId()),
 		EventBridgeBus: aws.String(d.Get("eventbridge_bus").(string)),
-		EventFilter:    expandEventFilter(d.Get("event_filter").([]interface{})),
+		EventFilter:    expandEventFilter(d.Get("event_filter").([]any)),
 		Name:           aws.String(name),
 		Tags:           getTagsIn(ctx),
 	}
@@ -115,7 +115,7 @@ func resourceEventIntegrationCreate(ctx context.Context, d *schema.ResourceData,
 	return append(diags, resourceEventIntegrationRead(ctx, d, meta)...)
 }
 
-func resourceEventIntegrationRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceEventIntegrationRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	conn := meta.(*conns.AWSClient).AppIntegrationsClient(ctx)
@@ -155,7 +155,7 @@ func resourceEventIntegrationRead(ctx context.Context, d *schema.ResourceData, m
 	return diags
 }
 
-func resourceEventIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceEventIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	conn := meta.(*conns.AWSClient).AppIntegrationsClient(ctx)
@@ -177,7 +177,7 @@ func resourceEventIntegrationUpdate(ctx context.Context, d *schema.ResourceData,
 	return append(diags, resourceEventIntegrationRead(ctx, d, meta)...)
 }
 
-func resourceEventIntegrationDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceEventIntegrationDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	conn := meta.(*conns.AWSClient).AppIntegrationsClient(ctx)
@@ -200,12 +200,12 @@ func resourceEventIntegrationDelete(ctx context.Context, d *schema.ResourceData,
 	return diags
 }
 
-func expandEventFilter(eventFilter []interface{}) *awstypes.EventFilter {
+func expandEventFilter(eventFilter []any) *awstypes.EventFilter {
 	if len(eventFilter) == 0 || eventFilter[0] == nil {
 		return nil
 	}
 
-	tfMap, ok := eventFilter[0].(map[string]interface{})
+	tfMap, ok := eventFilter[0].(map[string]any)
 	if !ok {
 		return nil
 	}
@@ -217,14 +217,14 @@ func expandEventFilter(eventFilter []interface{}) *awstypes.EventFilter {
 	return result
 }
 
-func flattenEventFilter(eventFilter *awstypes.EventFilter) []interface{} {
+func flattenEventFilter(eventFilter *awstypes.EventFilter) []any {
 	if eventFilter == nil {
-		return []interface{}{}
+		return []any{}
 	}
 
-	values := map[string]interface{}{
+	values := map[string]any{
 		names.AttrSource: aws.ToString(eventFilter.Source),
 	}
 
-	return []interface{}{values}
+	return []any{values}
 }

@@ -1,4 +1,4 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package ec2_test
@@ -6,6 +6,7 @@ package ec2_test
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	sdkacctest "github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -13,8 +14,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-provider-aws/internal/acctest"
 	"github.com/hashicorp/terraform-provider-aws/internal/conns"
+	"github.com/hashicorp/terraform-provider-aws/internal/retry"
 	tfec2 "github.com/hashicorp/terraform-provider-aws/internal/service/ec2"
-	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
 	"github.com/hashicorp/terraform-provider-aws/names"
 )
 
@@ -38,6 +39,20 @@ func TestAccEC2EIPDomainName_basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet(resourceName, "ptr_record"),
 				),
 			},
+			{
+				ImportState:       true,
+				ImportStateVerify: true,
+				ResourceName:      resourceName,
+				ImportStateVerifyIgnore: []string{
+					names.AttrDomainName,
+				},
+				ImportStateCheck: acctest.ImportCheckResourceAttr(
+					names.AttrDomainName,
+					// ptr_record used as domain_name when importing includes a trailing dot.
+					// Ignore the trailing dot when comparing to the config value.
+					strings.TrimSuffix(domain, ".")+".",
+				),
+			},
 		},
 	})
 }
@@ -59,7 +74,7 @@ func TestAccEC2EIPDomainName_disappears(t *testing.T) {
 				Config: testAccEIPDomainNameConfig_basic(rName, rootDomain, domain),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckEIPDomainNameExists(ctx, resourceName),
-					acctest.CheckFrameworkResourceDisappears(ctx, acctest.Provider, tfec2.ResourceEIPDomainName, resourceName),
+					acctest.CheckFrameworkResourceDisappears(ctx, t, tfec2.ResourceEIPDomainName, resourceName),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -125,7 +140,7 @@ func testAccCheckEIPDomainNameDestroy(ctx context.Context) resource.TestCheckFun
 
 			_, err := tfec2.FindEIPDomainNameAttributeByAllocationID(ctx, conn, rs.Primary.ID)
 
-			if tfresource.NotFound(err) {
+			if retry.NotFound(err) {
 				continue
 			}
 

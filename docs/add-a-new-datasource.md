@@ -1,5 +1,8 @@
+<!-- Copyright IBM Corp. 2014, 2026 -->
+<!-- SPDX-License-Identifier: MPL-2.0 -->
+
 <!-- markdownlint-configure-file { "code-block-style": false } -->
-# Adding a New Data Source
+# Adding a New Data Source Type
 
 New data sources are required when AWS adds a new service, or adds new features within an existing service which would require a new data source to allow practitioners to query existing resources of that type for use in their configurations. Anything with a Describe or Get endpoint could make a data source, but some are more useful than others.
 
@@ -46,12 +49,16 @@ Data Sources use a self-registration process that adds them to the provider usin
     )
 
     // @FrameworkDataSource("aws_something_example", name="Example")
-    func newResourceExample(_ context.Context) (datasource.ResourceWithConfigure, error) {
-    	return &dataSourceExample{}, nil
+    func newExampleDataSource(_ context.Context) (datasource.DataSourceWithConfigure, error) {
+    	return &exampleDataSource{}, nil
     }
 
-    type dataSourceExample struct {
-	    framework.DataSourceWithConfigure
+    type exampleDataSource struct {
+    	framework.DataSourceWithModel[exampleDataSourceModel]
+    }
+
+    type exampleDataSourceModel {
+    	// Fields corresponding to attributes in the Schema.
     }
     ```
 

@@ -1,4 +1,4 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
 
 package guardduty_test
@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-provider-aws/internal/acctest"
-	"github.com/hashicorp/terraform-provider-aws/internal/conns"
 	"github.com/hashicorp/terraform-provider-aws/internal/errs"
 	tfguardduty "github.com/hashicorp/terraform-provider-aws/internal/service/guardduty"
 	"github.com/hashicorp/terraform-provider-aws/names"
@@ -22,20 +21,20 @@ func testAccOrganizationAdminAccount_basic(t *testing.T) {
 	ctx := acctest.Context(t)
 	resourceName := "aws_guardduty_organization_admin_account.test"
 
-	resource.Test(t, resource.TestCase{
+	acctest.Test(ctx, t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheck(ctx, t)
-			acctest.PreCheckOrganizationsAccount(ctx, t)
+			acctest.PreCheckOrganizationManagementAccount(ctx, t)
 			testAccPreCheckDetectorNotExists(ctx, t)
 		},
 		ErrorCheck:               acctest.ErrorCheck(t, names.GuardDutyServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckOrganizationAdminAccountDestroy(ctx),
+		CheckDestroy:             testAccCheckOrganizationAdminAccountDestroy(ctx, t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccOrganizationAdminAccountConfig_self(),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckOrganizationAdminAccountExists(ctx, resourceName),
+					testAccCheckOrganizationAdminAccountExists(ctx, t, resourceName),
 					acctest.CheckResourceAttrAccountID(ctx, resourceName, "admin_account_id"),
 				),
 			},
@@ -48,9 +47,9 @@ func testAccOrganizationAdminAccount_basic(t *testing.T) {
 	})
 }
 
-func testAccCheckOrganizationAdminAccountDestroy(ctx context.Context) resource.TestCheckFunc {
+func testAccCheckOrganizationAdminAccountDestroy(ctx context.Context, t *testing.T) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		conn := acctest.Provider.Meta().(*conns.AWSClient).GuardDutyClient(ctx)
+		conn := acctest.ProviderMeta(ctx, t).GuardDutyClient(ctx)
 
 		for _, rs := range s.RootModule().Resources {
 			if rs.Type != "aws_guardduty_organization_admin_account" {
@@ -78,14 +77,14 @@ func testAccCheckOrganizationAdminAccountDestroy(ctx context.Context) resource.T
 	}
 }
 
-func testAccCheckOrganizationAdminAccountExists(ctx context.Context, resourceName string) resource.TestCheckFunc {
+func testAccCheckOrganizationAdminAccountExists(ctx context.Context, t *testing.T, resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
 			return fmt.Errorf("Not found: %s", resourceName)
 		}
 
-		conn := acctest.Provider.Meta().(*conns.AWSClient).GuardDutyClient(ctx)
+		conn := acctest.ProviderMeta(ctx, t).GuardDutyClient(ctx)
 
 		adminAccount, err := tfguardduty.GetOrganizationAdminAccount(ctx, conn, rs.Primary.ID)
 
@@ -103,21 +102,10 @@ func testAccCheckOrganizationAdminAccountExists(ctx context.Context, resourceNam
 
 func testAccOrganizationAdminAccountConfig_self() string {
 	return `
-data "aws_caller_identity" "current" {}
-
-data "aws_partition" "current" {}
-
-resource "aws_organizations_organization" "test" {
-  aws_service_access_principals = ["guardduty.${data.aws_partition.current.dns_suffix}"]
-  feature_set                   = "ALL"
-}
-
 resource "aws_guardduty_detector" "test" {}
 
 resource "aws_guardduty_organization_admin_account" "test" {
-  depends_on = [aws_organizations_organization.test, aws_guardduty_detector.test]
-
-  admin_account_id = data.aws_caller_identity.current.account_id
+  admin_account_id = aws_guardduty_detector.test.account_id
 }
 `
 }

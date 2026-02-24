@@ -1,5 +1,7 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
+
+// DONOTCOPY: Copying old resources spreads bad habits. Use skaff instead.
 
 package ec2
 
@@ -36,7 +38,7 @@ func resourceEBSDefaultKMSKey() *schema.Resource {
 	}
 }
 
-func resourceEBSDefaultKMSKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceEBSDefaultKMSKeyCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).EC2Client(ctx)
 
@@ -53,7 +55,7 @@ func resourceEBSDefaultKMSKeyCreate(ctx context.Context, d *schema.ResourceData,
 	return append(diags, resourceEBSDefaultKMSKeyRead(ctx, d, meta)...)
 }
 
-func resourceEBSDefaultKMSKeyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceEBSDefaultKMSKeyRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).EC2Client(ctx)
 
@@ -68,7 +70,7 @@ func resourceEBSDefaultKMSKeyRead(ctx context.Context, d *schema.ResourceData, m
 	return diags
 }
 
-func resourceEBSDefaultKMSKeyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceEBSDefaultKMSKeyDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).EC2Client(ctx)
 

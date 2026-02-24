@@ -1,5 +1,7 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
+
+// DONOTCOPY: Copying old resources spreads bad habits. Use skaff instead.
 
 package macie2
 
@@ -14,9 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/macie2"
 	awstypes "github.com/aws/aws-sdk-go-v2/service/macie2/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-aws/internal/conns"
@@ -25,9 +25,9 @@ import (
 	"github.com/hashicorp/terraform-provider-aws/internal/errs"
 	"github.com/hashicorp/terraform-provider-aws/internal/errs/sdkdiag"
 	"github.com/hashicorp/terraform-provider-aws/internal/flex"
+	"github.com/hashicorp/terraform-provider-aws/internal/retry"
 	tftags "github.com/hashicorp/terraform-provider-aws/internal/tags"
 	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
-	"github.com/hashicorp/terraform-provider-aws/internal/verify"
 	"github.com/hashicorp/terraform-provider-aws/names"
 )
 
@@ -611,10 +611,7 @@ func resourceClassificationJob() *schema.Resource {
 			},
 		},
 
-		CustomizeDiff: customdiff.Sequence(
-			verify.SetTagsDiff,
-			resourceClassificationJobCustomizeDiff,
-		),
+		CustomizeDiff: resourceClassificationJobCustomizeDiff,
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(4 * time.Minute),
@@ -623,7 +620,7 @@ func resourceClassificationJob() *schema.Resource {
 	}
 }
 
-func resourceClassificationJobCustomizeDiff(_ context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+func resourceClassificationJobCustomizeDiff(_ context.Context, diff *schema.ResourceDiff, meta any) error {
 	//TagScopeTerm() enforces the `target` key even though documentation marks it as optional.
 	//ClassificationJobs criteria and scoping cannot be updated.
 	//The API as of Aug 7, 2022 returns an empty string (even if a target was sent), causing a diff on new plans.
@@ -649,21 +646,21 @@ func resourceClassificationJobCustomizeDiff(_ context.Context, diff *schema.Reso
 	return nil
 }
 
-func resourceClassificationJobCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceClassificationJobCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).Macie2Client(ctx)
 
-	name := create.Name(d.Get(names.AttrName).(string), d.Get(names.AttrNamePrefix).(string))
+	name := create.Name(ctx, d.Get(names.AttrName).(string), d.Get(names.AttrNamePrefix).(string))
 	input := macie2.CreateClassificationJobInput{
 		ClientToken:     aws.String(id.UniqueId()),
 		JobType:         awstypes.JobType(d.Get("job_type").(string)),
 		Name:            aws.String(name),
-		S3JobDefinition: expandS3JobDefinition(d.Get("s3_job_definition").([]interface{})),
+		S3JobDefinition: expandS3JobDefinition(d.Get("s3_job_definition").([]any)),
 		Tags:            getTagsIn(ctx),
 	}
 
 	if v, ok := d.GetOk("custom_data_identifier_ids"); ok {
-		input.CustomDataIdentifierIds = flex.ExpandStringValueList(v.([]interface{}))
+		input.CustomDataIdentifierIds = flex.ExpandStringValueList(v.([]any))
 	}
 
 	if v, ok := d.GetOk(names.AttrDescription); ok {
@@ -679,10 +676,10 @@ func resourceClassificationJobCreate(ctx context.Context, d *schema.ResourceData
 	}
 
 	if v, ok := d.GetOk("schedule_frequency"); ok {
-		input.ScheduleFrequency = expandScheduleFrequency(v.([]interface{}))
+		input.ScheduleFrequency = expandScheduleFrequency(v.([]any))
 	}
 
-	outputRaw, err := tfresource.RetryWhenAWSErrCodeEquals(ctx, d.Timeout(schema.TimeoutCreate), func() (interface{}, error) {
+	outputRaw, err := tfresource.RetryWhenAWSErrCodeEquals(ctx, d.Timeout(schema.TimeoutCreate), func(ctx context.Context) (any, error) {
 		return conn.CreateClassificationJob(ctx, &input)
 	}, errCodeClientError)
 
@@ -695,13 +692,13 @@ func resourceClassificationJobCreate(ctx context.Context, d *schema.ResourceData
 	return append(diags, resourceClassificationJobRead(ctx, d, meta)...)
 }
 
-func resourceClassificationJobRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceClassificationJobRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).Macie2Client(ctx)
 
 	output, err := findClassificationJobByID(ctx, conn, d.Id())
 
-	if !d.IsNewResource() && tfresource.NotFound(err) {
+	if !d.IsNewResource() && retry.NotFound(err) {
 		log.Printf("[WARN] Macie Classification Job (%s) not found, removing from state", d.Id())
 		d.SetId("")
 		return diags
@@ -743,7 +740,7 @@ func resourceClassificationJobRead(ctx context.Context, d *schema.ResourceData, 
 	return diags
 }
 
-func resourceClassificationJobUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceClassificationJobUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).Macie2Client(ctx)
 
@@ -769,7 +766,7 @@ func resourceClassificationJobUpdate(ctx context.Context, d *schema.ResourceData
 	return append(diags, resourceClassificationJobRead(ctx, d, meta)...)
 }
 
-func resourceClassificationJobDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceClassificationJobDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).Macie2Client(ctx)
 
@@ -804,8 +801,7 @@ func findClassificationJob(ctx context.Context, conn *macie2.Client, input *maci
 
 	if isClassificationJobNotFoundError(err) {
 		return nil, &retry.NotFoundError{
-			LastError:   err,
-			LastRequest: input,
+			LastError: err,
 		}
 	}
 
@@ -814,7 +810,7 @@ func findClassificationJob(ctx context.Context, conn *macie2.Client, input *maci
 	}
 
 	if output == nil {
-		return nil, tfresource.NewEmptyResultError(input)
+		return nil, tfresource.NewEmptyResultError()
 	}
 
 	return output, nil
@@ -834,52 +830,52 @@ func isClassificationJobNotFoundError(err error) bool {
 	return false
 }
 
-func expandS3JobDefinition(s3JobDefinitionObj []interface{}) *awstypes.S3JobDefinition {
+func expandS3JobDefinition(s3JobDefinitionObj []any) *awstypes.S3JobDefinition {
 	if len(s3JobDefinitionObj) == 0 {
 		return nil
 	}
 
 	var s3JobDefinition awstypes.S3JobDefinition
 
-	s3JobMap := s3JobDefinitionObj[0].(map[string]interface{})
+	s3JobMap := s3JobDefinitionObj[0].(map[string]any)
 
-	if v1, ok1 := s3JobMap["bucket_criteria"]; ok1 && len(v1.([]interface{})) > 0 {
-		s3JobDefinition.BucketCriteria = expandS3BucketCriteriaForJob(v1.([]interface{}))
+	if v1, ok1 := s3JobMap["bucket_criteria"]; ok1 && len(v1.([]any)) > 0 {
+		s3JobDefinition.BucketCriteria = expandS3BucketCriteriaForJob(v1.([]any))
 	}
-	if v1, ok1 := s3JobMap["bucket_definitions"]; ok1 && len(v1.([]interface{})) > 0 {
-		s3JobDefinition.BucketDefinitions = expandBucketDefinitions(v1.([]interface{}))
+	if v1, ok1 := s3JobMap["bucket_definitions"]; ok1 && len(v1.([]any)) > 0 {
+		s3JobDefinition.BucketDefinitions = expandBucketDefinitions(v1.([]any))
 	}
-	if v1, ok1 := s3JobMap["scoping"]; ok1 && len(v1.([]interface{})) > 0 {
-		s3JobDefinition.Scoping = expandScoping(v1.([]interface{}))
+	if v1, ok1 := s3JobMap["scoping"]; ok1 && len(v1.([]any)) > 0 {
+		s3JobDefinition.Scoping = expandScoping(v1.([]any))
 	}
 
 	return &s3JobDefinition
 }
 
-func expandS3BucketCriteriaForJob(criteria []interface{}) *awstypes.S3BucketCriteriaForJob {
+func expandS3BucketCriteriaForJob(criteria []any) *awstypes.S3BucketCriteriaForJob {
 	if len(criteria) == 0 {
 		return nil
 	}
 
 	var criteriaObj awstypes.S3BucketCriteriaForJob
 
-	criteriaMap := criteria[0].(map[string]interface{})
+	criteriaMap := criteria[0].(map[string]any)
 
-	if v, ok := criteriaMap["excludes"]; ok && len(v.([]interface{})) > 0 {
-		v1 := v.([]interface{})
-		andMap := v1[0].(map[string]interface{})
-		if v2, ok1 := andMap["and"]; ok1 && len(v2.([]interface{})) > 0 {
+	if v, ok := criteriaMap["excludes"]; ok && len(v.([]any)) > 0 {
+		v1 := v.([]any)
+		andMap := v1[0].(map[string]any)
+		if v2, ok1 := andMap["and"]; ok1 && len(v2.([]any)) > 0 {
 			criteriaObj.Excludes = &awstypes.CriteriaBlockForJob{
-				And: expandCriteriaBlockForJob(v2.([]interface{})),
+				And: expandCriteriaBlockForJob(v2.([]any)),
 			}
 		}
 	}
-	if v, ok := criteriaMap["includes"]; ok && len(v.([]interface{})) > 0 {
-		v1 := v.([]interface{})
-		andMap := v1[0].(map[string]interface{})
-		if v2, ok1 := andMap["and"]; ok1 && len(v2.([]interface{})) > 0 {
+	if v, ok := criteriaMap["includes"]; ok && len(v.([]any)) > 0 {
+		v1 := v.([]any)
+		andMap := v1[0].(map[string]any)
+		if v2, ok1 := andMap["and"]; ok1 && len(v2.([]any)) > 0 {
 			criteriaObj.Includes = &awstypes.CriteriaBlockForJob{
-				And: expandCriteriaBlockForJob(v2.([]interface{})),
+				And: expandCriteriaBlockForJob(v2.([]any)),
 			}
 		}
 	}
@@ -887,7 +883,7 @@ func expandS3BucketCriteriaForJob(criteria []interface{}) *awstypes.S3BucketCrit
 	return &criteriaObj
 }
 
-func expandCriteriaBlockForJob(criteriaBlocks []interface{}) []awstypes.CriteriaForJob {
+func expandCriteriaBlockForJob(criteriaBlocks []any) []awstypes.CriteriaForJob {
 	if len(criteriaBlocks) == 0 {
 		return nil
 	}
@@ -895,14 +891,14 @@ func expandCriteriaBlockForJob(criteriaBlocks []interface{}) []awstypes.Criteria
 	var criteriaBlocksList []awstypes.CriteriaForJob
 
 	for _, v := range criteriaBlocks {
-		v1 := v.(map[string]interface{})
+		v1 := v.(map[string]any)
 		var criteriaBlock awstypes.CriteriaForJob
 
-		if v2, ok1 := v1["simple_criterion"]; ok1 && len(v2.([]interface{})) > 0 {
-			criteriaBlock.SimpleCriterion = expandSimpleCriterionForJob(v2.([]interface{}))
+		if v2, ok1 := v1["simple_criterion"]; ok1 && len(v2.([]any)) > 0 {
+			criteriaBlock.SimpleCriterion = expandSimpleCriterionForJob(v2.([]any))
 		}
-		if v2, ok1 := v1["tag_criterion"]; ok1 && len(v2.([]interface{})) > 0 {
-			criteriaBlock.TagCriterion = expandTagCriterionForJob(v2.([]interface{}))
+		if v2, ok1 := v1["tag_criterion"]; ok1 && len(v2.([]any)) > 0 {
+			criteriaBlock.TagCriterion = expandTagCriterionForJob(v2.([]any))
 		}
 
 		criteriaBlocksList = append(criteriaBlocksList, criteriaBlock)
@@ -911,14 +907,14 @@ func expandCriteriaBlockForJob(criteriaBlocks []interface{}) []awstypes.Criteria
 	return criteriaBlocksList
 }
 
-func expandSimpleCriterionForJob(criterion []interface{}) *awstypes.SimpleCriterionForJob {
+func expandSimpleCriterionForJob(criterion []any) *awstypes.SimpleCriterionForJob {
 	if len(criterion) == 0 {
 		return nil
 	}
 
 	var simpleCriterion awstypes.SimpleCriterionForJob
 
-	simpleCriterionMap := criterion[0].(map[string]interface{})
+	simpleCriterionMap := criterion[0].(map[string]any)
 
 	if v, ok := simpleCriterionMap["comparator"]; ok && v.(string) != "" {
 		simpleCriterion.Comparator = awstypes.JobComparator(v.(string))
@@ -926,33 +922,33 @@ func expandSimpleCriterionForJob(criterion []interface{}) *awstypes.SimpleCriter
 	if v, ok := simpleCriterionMap[names.AttrKey]; ok && v.(string) != "" {
 		simpleCriterion.Key = awstypes.SimpleCriterionKeyForJob(v.(string))
 	}
-	if v, ok := simpleCriterionMap[names.AttrValues]; ok && len(v.([]interface{})) > 0 {
-		simpleCriterion.Values = flex.ExpandStringValueList(v.([]interface{}))
+	if v, ok := simpleCriterionMap[names.AttrValues]; ok && len(v.([]any)) > 0 {
+		simpleCriterion.Values = flex.ExpandStringValueList(v.([]any))
 	}
 
 	return &simpleCriterion
 }
 
-func expandTagCriterionForJob(criterion []interface{}) *awstypes.TagCriterionForJob {
+func expandTagCriterionForJob(criterion []any) *awstypes.TagCriterionForJob {
 	if len(criterion) == 0 {
 		return nil
 	}
 
 	var tagCriterion awstypes.TagCriterionForJob
 
-	tagCriterionMap := criterion[0].(map[string]interface{})
+	tagCriterionMap := criterion[0].(map[string]any)
 
 	if v, ok := tagCriterionMap["comparator"]; ok && v.(string) != "" {
 		tagCriterion.Comparator = awstypes.JobComparator(v.(string))
 	}
-	if v, ok := tagCriterionMap["tag_values"]; ok && len(v.([]interface{})) > 0 {
-		tagCriterion.TagValues = expandTagCriterionPairForJob(v.([]interface{}))
+	if v, ok := tagCriterionMap["tag_values"]; ok && len(v.([]any)) > 0 {
+		tagCriterion.TagValues = expandTagCriterionPairForJob(v.([]any))
 	}
 
 	return &tagCriterion
 }
 
-func expandTagCriterionPairForJob(tagValues []interface{}) []awstypes.TagCriterionPairForJob {
+func expandTagCriterionPairForJob(tagValues []any) []awstypes.TagCriterionPairForJob {
 	if len(tagValues) == 0 {
 		return nil
 	}
@@ -960,7 +956,7 @@ func expandTagCriterionPairForJob(tagValues []interface{}) []awstypes.TagCriteri
 	var tagValuesList []awstypes.TagCriterionPairForJob
 
 	for _, v := range tagValues {
-		v1 := v.(map[string]interface{})
+		v1 := v.(map[string]any)
 		var tagValue awstypes.TagCriterionPairForJob
 
 		if v2, ok := v1[names.AttrValue]; ok && v2.(string) != "" {
@@ -975,7 +971,7 @@ func expandTagCriterionPairForJob(tagValues []interface{}) []awstypes.TagCriteri
 	return tagValuesList
 }
 
-func expandBucketDefinitions(definitions []interface{}) []awstypes.S3BucketDefinitionForJob {
+func expandBucketDefinitions(definitions []any) []awstypes.S3BucketDefinitionForJob {
 	if len(definitions) == 0 {
 		return nil
 	}
@@ -983,10 +979,10 @@ func expandBucketDefinitions(definitions []interface{}) []awstypes.S3BucketDefin
 	var bucketDefinitions []awstypes.S3BucketDefinitionForJob
 
 	for _, v := range definitions {
-		v1 := v.(map[string]interface{})
+		v1 := v.(map[string]any)
 
 		bucketDefinition := &awstypes.S3BucketDefinitionForJob{
-			Buckets:   flex.ExpandStringValueList(v1["buckets"].([]interface{})),
+			Buckets:   flex.ExpandStringValueList(v1["buckets"].([]any)),
 			AccountId: aws.String(v1[names.AttrAccountID].(string)),
 		}
 
@@ -996,30 +992,30 @@ func expandBucketDefinitions(definitions []interface{}) []awstypes.S3BucketDefin
 	return bucketDefinitions
 }
 
-func expandScoping(scoping []interface{}) *awstypes.Scoping {
+func expandScoping(scoping []any) *awstypes.Scoping {
 	if len(scoping) == 0 {
 		return nil
 	}
 
 	var scopingObj awstypes.Scoping
 
-	scopingMap := scoping[0].(map[string]interface{})
+	scopingMap := scoping[0].(map[string]any)
 
-	if v, ok := scopingMap["excludes"]; ok && len(v.([]interface{})) > 0 {
-		v1 := v.([]interface{})
-		andMap := v1[0].(map[string]interface{})
-		if v2, ok1 := andMap["and"]; ok1 && len(v2.([]interface{})) > 0 {
+	if v, ok := scopingMap["excludes"]; ok && len(v.([]any)) > 0 {
+		v1 := v.([]any)
+		andMap := v1[0].(map[string]any)
+		if v2, ok1 := andMap["and"]; ok1 && len(v2.([]any)) > 0 {
 			scopingObj.Excludes = &awstypes.JobScopingBlock{
-				And: expandJobScopeTerm(v2.([]interface{})),
+				And: expandJobScopeTerm(v2.([]any)),
 			}
 		}
 	}
-	if v, ok := scopingMap["includes"]; ok && len(v.([]interface{})) > 0 {
-		v1 := v.([]interface{})
-		andMap := v1[0].(map[string]interface{})
-		if v2, ok1 := andMap["and"]; ok1 && len(v2.([]interface{})) > 0 {
+	if v, ok := scopingMap["includes"]; ok && len(v.([]any)) > 0 {
+		v1 := v.([]any)
+		andMap := v1[0].(map[string]any)
+		if v2, ok1 := andMap["and"]; ok1 && len(v2.([]any)) > 0 {
 			scopingObj.Includes = &awstypes.JobScopingBlock{
-				And: expandJobScopeTerm(v2.([]interface{})),
+				And: expandJobScopeTerm(v2.([]any)),
 			}
 		}
 	}
@@ -1027,7 +1023,7 @@ func expandScoping(scoping []interface{}) *awstypes.Scoping {
 	return &scopingObj
 }
 
-func expandJobScopeTerm(scopeTerms []interface{}) []awstypes.JobScopeTerm {
+func expandJobScopeTerm(scopeTerms []any) []awstypes.JobScopeTerm {
 	if len(scopeTerms) == 0 {
 		return nil
 	}
@@ -1035,14 +1031,14 @@ func expandJobScopeTerm(scopeTerms []interface{}) []awstypes.JobScopeTerm {
 	var scopeTermsList []awstypes.JobScopeTerm
 
 	for _, v := range scopeTerms {
-		v1 := v.(map[string]interface{})
+		v1 := v.(map[string]any)
 		var scopeTerm awstypes.JobScopeTerm
 
-		if v2, ok1 := v1["simple_scope_term"]; ok1 && len(v2.([]interface{})) > 0 {
-			scopeTerm.SimpleScopeTerm = expandSimpleScopeTerm(v2.([]interface{}))
+		if v2, ok1 := v1["simple_scope_term"]; ok1 && len(v2.([]any)) > 0 {
+			scopeTerm.SimpleScopeTerm = expandSimpleScopeTerm(v2.([]any))
 		}
-		if v2, ok1 := v1["tag_scope_term"]; ok1 && len(v2.([]interface{})) > 0 {
-			scopeTerm.TagScopeTerm = expandTagScopeTerm(v2.([]interface{}))
+		if v2, ok1 := v1["tag_scope_term"]; ok1 && len(v2.([]any)) > 0 {
+			scopeTerm.TagScopeTerm = expandTagScopeTerm(v2.([]any))
 		}
 		scopeTermsList = append(scopeTermsList, scopeTerm)
 	}
@@ -1050,20 +1046,20 @@ func expandJobScopeTerm(scopeTerms []interface{}) []awstypes.JobScopeTerm {
 	return scopeTermsList
 }
 
-func expandSimpleScopeTerm(simpleScopeTerm []interface{}) *awstypes.SimpleScopeTerm {
+func expandSimpleScopeTerm(simpleScopeTerm []any) *awstypes.SimpleScopeTerm {
 	if len(simpleScopeTerm) == 0 {
 		return nil
 	}
 
 	var simpleTerm awstypes.SimpleScopeTerm
 
-	simpleScopeTermMap := simpleScopeTerm[0].(map[string]interface{})
+	simpleScopeTermMap := simpleScopeTerm[0].(map[string]any)
 
 	if v, ok := simpleScopeTermMap[names.AttrKey]; ok && v.(string) != "" {
 		simpleTerm.Key = awstypes.ScopeFilterKey(v.(string))
 	}
-	if v, ok := simpleScopeTermMap[names.AttrValues]; ok && len(v.([]interface{})) > 0 {
-		simpleTerm.Values = flex.ExpandStringValueList(v.([]interface{}))
+	if v, ok := simpleScopeTermMap[names.AttrValues]; ok && len(v.([]any)) > 0 {
+		simpleTerm.Values = flex.ExpandStringValueList(v.([]any))
 	}
 	if v, ok := simpleScopeTermMap["comparator"]; ok && v.(string) != "" {
 		simpleTerm.Comparator = awstypes.JobComparator(v.(string))
@@ -1072,20 +1068,20 @@ func expandSimpleScopeTerm(simpleScopeTerm []interface{}) *awstypes.SimpleScopeT
 	return &simpleTerm
 }
 
-func expandTagScopeTerm(tagScopeTerm []interface{}) *awstypes.TagScopeTerm {
+func expandTagScopeTerm(tagScopeTerm []any) *awstypes.TagScopeTerm {
 	if len(tagScopeTerm) == 0 {
 		return nil
 	}
 
 	var tagTerm awstypes.TagScopeTerm
 
-	tagScopeTermMap := tagScopeTerm[0].(map[string]interface{})
+	tagScopeTermMap := tagScopeTerm[0].(map[string]any)
 
 	if v, ok := tagScopeTermMap[names.AttrKey]; ok && v.(string) != "" {
 		tagTerm.Key = aws.String(v.(string))
 	}
-	if v, ok := tagScopeTermMap["tag_values"]; ok && len(v.([]interface{})) > 0 {
-		tagTerm.TagValues = expandTagValues(v.([]interface{}))
+	if v, ok := tagScopeTermMap["tag_values"]; ok && len(v.([]any)) > 0 {
+		tagTerm.TagValues = expandTagValues(v.([]any))
 	}
 	if v, ok := tagScopeTermMap["comparator"]; ok && v.(string) != "" {
 		tagTerm.Comparator = awstypes.JobComparator(v.(string))
@@ -1097,7 +1093,7 @@ func expandTagScopeTerm(tagScopeTerm []interface{}) *awstypes.TagScopeTerm {
 	return &tagTerm
 }
 
-func expandTagValues(tagValues []interface{}) []awstypes.TagValuePair {
+func expandTagValues(tagValues []any) []awstypes.TagValuePair {
 	if len(tagValues) == 0 {
 		return nil
 	}
@@ -1105,7 +1101,7 @@ func expandTagValues(tagValues []interface{}) []awstypes.TagValuePair {
 	var tagValuesList []awstypes.TagValuePair
 
 	for _, v := range tagValues {
-		v1 := v.(map[string]interface{})
+		v1 := v.(map[string]any)
 		var tagValue awstypes.TagValuePair
 
 		if v2, ok := v1[names.AttrValue]; ok && v2.(string) != "" {
@@ -1120,14 +1116,14 @@ func expandTagValues(tagValues []interface{}) []awstypes.TagValuePair {
 	return tagValuesList
 }
 
-func expandScheduleFrequency(schedules []interface{}) *awstypes.JobScheduleFrequency {
+func expandScheduleFrequency(schedules []any) *awstypes.JobScheduleFrequency {
 	if len(schedules) == 0 {
 		return nil
 	}
 
 	var jobScheduleFrequency awstypes.JobScheduleFrequency
 
-	scheduleMap := schedules[0].(map[string]interface{})
+	scheduleMap := schedules[0].(map[string]any)
 
 	if v1, ok1 := scheduleMap["daily_schedule"]; ok1 && v1.(bool) {
 		jobScheduleFrequency.DailySchedule = &awstypes.DailySchedule{}
@@ -1146,13 +1142,13 @@ func expandScheduleFrequency(schedules []interface{}) *awstypes.JobScheduleFrequ
 	return &jobScheduleFrequency
 }
 
-func flattenScheduleFrequency(schedule *awstypes.JobScheduleFrequency) []map[string]interface{} {
+func flattenScheduleFrequency(schedule *awstypes.JobScheduleFrequency) []map[string]any {
 	if schedule == nil {
 		return nil
 	}
 
-	var schedulesList []map[string]interface{}
-	schedMap := map[string]interface{}{}
+	var schedulesList []map[string]any
+	schedMap := map[string]any{}
 	if schedule.DailySchedule != nil {
 		schedMap["daily_schedule"] = true
 	}
@@ -1167,14 +1163,14 @@ func flattenScheduleFrequency(schedule *awstypes.JobScheduleFrequency) []map[str
 	return schedulesList
 }
 
-func flattenS3JobDefinition(s3JobDefinition *awstypes.S3JobDefinition) []map[string]interface{} {
+func flattenS3JobDefinition(s3JobDefinition *awstypes.S3JobDefinition) []map[string]any {
 	if s3JobDefinition == nil {
 		return nil
 	}
 
-	var jobDefinitions []map[string]interface{}
+	var jobDefinitions []map[string]any
 
-	jobDefinitions = append(jobDefinitions, map[string]interface{}{
+	jobDefinitions = append(jobDefinitions, map[string]any{
 		"bucket_criteria":    flattenS3BucketCriteriaForJob(s3JobDefinition.BucketCriteria),
 		"bucket_definitions": flattenBucketDefinition(s3JobDefinition.BucketDefinitions),
 		"scoping":            flattenScoping(s3JobDefinition.Scoping),
@@ -1183,14 +1179,14 @@ func flattenS3JobDefinition(s3JobDefinition *awstypes.S3JobDefinition) []map[str
 	return jobDefinitions
 }
 
-func flattenS3BucketCriteriaForJob(criteria *awstypes.S3BucketCriteriaForJob) []map[string]interface{} {
+func flattenS3BucketCriteriaForJob(criteria *awstypes.S3BucketCriteriaForJob) []map[string]any {
 	if criteria == nil {
 		return nil
 	}
 
-	var criteriaList []map[string]interface{}
+	var criteriaList []map[string]any
 
-	criteriaList = append(criteriaList, map[string]interface{}{
+	criteriaList = append(criteriaList, map[string]any{
 		"excludes": flattenCriteriaBlockForJob(criteria.Excludes),
 		"includes": flattenCriteriaBlockForJob(criteria.Includes),
 	})
@@ -1198,29 +1194,29 @@ func flattenS3BucketCriteriaForJob(criteria *awstypes.S3BucketCriteriaForJob) []
 	return criteriaList
 }
 
-func flattenCriteriaBlockForJob(criteriaBlock *awstypes.CriteriaBlockForJob) []map[string]interface{} {
+func flattenCriteriaBlockForJob(criteriaBlock *awstypes.CriteriaBlockForJob) []map[string]any {
 	if criteriaBlock == nil {
 		return nil
 	}
 
-	var criteriaBlockList []map[string]interface{}
+	var criteriaBlockList []map[string]any
 
-	criteriaBlockList = append(criteriaBlockList, map[string]interface{}{
+	criteriaBlockList = append(criteriaBlockList, map[string]any{
 		"and": flattenCriteriaForJob(criteriaBlock.And),
 	})
 
 	return criteriaBlockList
 }
 
-func flattenCriteriaForJob(criteria []awstypes.CriteriaForJob) []map[string]interface{} {
+func flattenCriteriaForJob(criteria []awstypes.CriteriaForJob) []map[string]any {
 	if criteria == nil {
 		return nil
 	}
 
-	var criteriaList []map[string]interface{}
+	var criteriaList []map[string]any
 
 	for _, criterion := range criteria {
-		criteriaList = append(criteriaList, map[string]interface{}{
+		criteriaList = append(criteriaList, map[string]any{
 			"simple_criterion": flattenSimpleCriterionForJob(criterion.SimpleCriterion),
 			"tag_criterion":    flattenTagCriterionForJob(criterion.TagCriterion),
 		})
@@ -1229,14 +1225,14 @@ func flattenCriteriaForJob(criteria []awstypes.CriteriaForJob) []map[string]inte
 	return criteriaList
 }
 
-func flattenSimpleCriterionForJob(criterion *awstypes.SimpleCriterionForJob) []map[string]interface{} {
+func flattenSimpleCriterionForJob(criterion *awstypes.SimpleCriterionForJob) []map[string]any {
 	if criterion == nil {
 		return nil
 	}
 
-	var simpleCriterionList []map[string]interface{}
+	var simpleCriterionList []map[string]any
 
-	simpleCriterionList = append(simpleCriterionList, map[string]interface{}{
+	simpleCriterionList = append(simpleCriterionList, map[string]any{
 		"comparator":     string(criterion.Comparator),
 		names.AttrKey:    string(criterion.Key),
 		names.AttrValues: flex.FlattenStringValueList(criterion.Values),
@@ -1245,14 +1241,14 @@ func flattenSimpleCriterionForJob(criterion *awstypes.SimpleCriterionForJob) []m
 	return simpleCriterionList
 }
 
-func flattenTagCriterionForJob(criterion *awstypes.TagCriterionForJob) []map[string]interface{} {
+func flattenTagCriterionForJob(criterion *awstypes.TagCriterionForJob) []map[string]any {
 	if criterion == nil {
 		return nil
 	}
 
-	var tagCriterionList []map[string]interface{}
+	var tagCriterionList []map[string]any
 
-	tagCriterionList = append(tagCriterionList, map[string]interface{}{
+	tagCriterionList = append(tagCriterionList, map[string]any{
 		"comparator": string(criterion.Comparator),
 		"tag_values": flattenTagCriterionPairForJob(criterion.TagValues),
 	})
@@ -1260,15 +1256,15 @@ func flattenTagCriterionForJob(criterion *awstypes.TagCriterionForJob) []map[str
 	return tagCriterionList
 }
 
-func flattenTagCriterionPairForJob(tagValues []awstypes.TagCriterionPairForJob) []map[string]interface{} {
+func flattenTagCriterionPairForJob(tagValues []awstypes.TagCriterionPairForJob) []map[string]any {
 	if len(tagValues) == 0 {
 		return nil
 	}
 
-	var tagValuesList []map[string]interface{}
+	var tagValuesList []map[string]any
 
 	for _, tagValue := range tagValues {
-		tagValuesList = append(tagValuesList, map[string]interface{}{
+		tagValuesList = append(tagValuesList, map[string]any{
 			names.AttrValue: aws.ToString(tagValue.Value),
 			names.AttrKey:   aws.ToString(tagValue.Key),
 		})
@@ -1277,15 +1273,15 @@ func flattenTagCriterionPairForJob(tagValues []awstypes.TagCriterionPairForJob) 
 	return tagValuesList
 }
 
-func flattenBucketDefinition(bucketDefinitions []awstypes.S3BucketDefinitionForJob) []map[string]interface{} {
+func flattenBucketDefinition(bucketDefinitions []awstypes.S3BucketDefinitionForJob) []map[string]any {
 	if len(bucketDefinitions) == 0 {
 		return nil
 	}
 
-	var bucketDefinitionList []map[string]interface{}
+	var bucketDefinitionList []map[string]any
 
 	for _, bucket := range bucketDefinitions {
-		bucketDefinitionList = append(bucketDefinitionList, map[string]interface{}{
+		bucketDefinitionList = append(bucketDefinitionList, map[string]any{
 			names.AttrAccountID: aws.ToString(bucket.AccountId),
 			"buckets":           flex.FlattenStringValueList(bucket.Buckets),
 		})
@@ -1294,14 +1290,14 @@ func flattenBucketDefinition(bucketDefinitions []awstypes.S3BucketDefinitionForJ
 	return bucketDefinitionList
 }
 
-func flattenScoping(scoping *awstypes.Scoping) []map[string]interface{} {
+func flattenScoping(scoping *awstypes.Scoping) []map[string]any {
 	if scoping == nil {
 		return nil
 	}
 
-	var scopingList []map[string]interface{}
+	var scopingList []map[string]any
 
-	scopingList = append(scopingList, map[string]interface{}{
+	scopingList = append(scopingList, map[string]any{
 		"excludes": flattenJobScopingBlock(scoping.Excludes),
 		"includes": flattenJobScopingBlock(scoping.Includes),
 	})
@@ -1309,29 +1305,29 @@ func flattenScoping(scoping *awstypes.Scoping) []map[string]interface{} {
 	return scopingList
 }
 
-func flattenJobScopingBlock(scopeTerm *awstypes.JobScopingBlock) []map[string]interface{} {
+func flattenJobScopingBlock(scopeTerm *awstypes.JobScopingBlock) []map[string]any {
 	if scopeTerm == nil {
 		return nil
 	}
 
-	var scopeTermList []map[string]interface{}
+	var scopeTermList []map[string]any
 
-	scopeTermList = append(scopeTermList, map[string]interface{}{
+	scopeTermList = append(scopeTermList, map[string]any{
 		"and": flattenJobScopeTerm(scopeTerm.And),
 	})
 
 	return scopeTermList
 }
 
-func flattenJobScopeTerm(scopeTerms []awstypes.JobScopeTerm) []map[string]interface{} {
+func flattenJobScopeTerm(scopeTerms []awstypes.JobScopeTerm) []map[string]any {
 	if scopeTerms == nil {
 		return nil
 	}
 
-	var scopeTermList []map[string]interface{}
+	var scopeTermList []map[string]any
 
 	for _, scopeTerm := range scopeTerms {
-		scopeTermList = append(scopeTermList, map[string]interface{}{
+		scopeTermList = append(scopeTermList, map[string]any{
 			"simple_scope_term": flattenSimpleScopeTerm(scopeTerm.SimpleScopeTerm),
 			"tag_scope_term":    flattenTagScopeTerm(scopeTerm.TagScopeTerm),
 		})
@@ -1340,14 +1336,14 @@ func flattenJobScopeTerm(scopeTerms []awstypes.JobScopeTerm) []map[string]interf
 	return scopeTermList
 }
 
-func flattenSimpleScopeTerm(simpleScopeTerm *awstypes.SimpleScopeTerm) []map[string]interface{} {
+func flattenSimpleScopeTerm(simpleScopeTerm *awstypes.SimpleScopeTerm) []map[string]any {
 	if simpleScopeTerm == nil {
 		return nil
 	}
 
-	var simpleScopeTermList []map[string]interface{}
+	var simpleScopeTermList []map[string]any
 
-	simpleScopeTermList = append(simpleScopeTermList, map[string]interface{}{
+	simpleScopeTermList = append(simpleScopeTermList, map[string]any{
 		names.AttrKey:    string(simpleScopeTerm.Key),
 		"comparator":     string(simpleScopeTerm.Comparator),
 		names.AttrValues: flex.FlattenStringValueList(simpleScopeTerm.Values),
@@ -1356,14 +1352,14 @@ func flattenSimpleScopeTerm(simpleScopeTerm *awstypes.SimpleScopeTerm) []map[str
 	return simpleScopeTermList
 }
 
-func flattenTagScopeTerm(tagScopeTerm *awstypes.TagScopeTerm) []map[string]interface{} {
+func flattenTagScopeTerm(tagScopeTerm *awstypes.TagScopeTerm) []map[string]any {
 	if tagScopeTerm == nil {
 		return nil
 	}
 
-	var tagScopeTermList []map[string]interface{}
+	var tagScopeTermList []map[string]any
 
-	tagScopeTermList = append(tagScopeTermList, map[string]interface{}{
+	tagScopeTermList = append(tagScopeTermList, map[string]any{
 		names.AttrKey:    aws.ToString(tagScopeTerm.Key),
 		"comparator":     string(tagScopeTerm.Comparator),
 		names.AttrTarget: string(tagScopeTerm.Target),
@@ -1373,15 +1369,15 @@ func flattenTagScopeTerm(tagScopeTerm *awstypes.TagScopeTerm) []map[string]inter
 	return tagScopeTermList
 }
 
-func flattenTagValues(tagValues []awstypes.TagValuePair) []map[string]interface{} {
+func flattenTagValues(tagValues []awstypes.TagValuePair) []map[string]any {
 	if len(tagValues) == 0 {
 		return nil
 	}
 
-	var tagValuesList []map[string]interface{}
+	var tagValuesList []map[string]any
 
 	for _, tagValue := range tagValues {
-		tagValuesList = append(tagValuesList, map[string]interface{}{
+		tagValuesList = append(tagValuesList, map[string]any{
 			names.AttrValue: aws.ToString(tagValue.Value),
 			names.AttrKey:   aws.ToString(tagValue.Key),
 		})
@@ -1390,14 +1386,14 @@ func flattenTagValues(tagValues []awstypes.TagValuePair) []map[string]interface{
 	return tagValuesList
 }
 
-func flattenUserPausedDetails(userPausedDetail *awstypes.UserPausedDetails) []map[string]interface{} {
+func flattenUserPausedDetails(userPausedDetail *awstypes.UserPausedDetails) []map[string]any {
 	if userPausedDetail == nil {
 		return nil
 	}
 
-	var userDetails []map[string]interface{}
+	var userDetails []map[string]any
 
-	userDetails = append(userDetails, map[string]interface{}{
+	userDetails = append(userDetails, map[string]any{
 		"job_imminent_expiration_health_event_arn": aws.ToString(userPausedDetail.JobImminentExpirationHealthEventArn),
 		"job_expires_at": userPausedDetail.JobExpiresAt.String(),
 		"job_paused_at":  userPausedDetail.JobPausedAt.String(),

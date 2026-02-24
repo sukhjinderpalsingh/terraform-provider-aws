@@ -1,5 +1,7 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
+
+// DONOTCOPY: Copying old resources spreads bad habits. Use skaff instead.
 
 package ec2
 
@@ -37,7 +39,7 @@ func resourceEBSEncryptionByDefault() *schema.Resource {
 	}
 }
 
-func resourceEBSEncryptionByDefaultCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceEBSEncryptionByDefaultCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).EC2Client(ctx)
 
@@ -52,7 +54,7 @@ func resourceEBSEncryptionByDefaultCreate(ctx context.Context, d *schema.Resourc
 	return append(diags, resourceEBSEncryptionByDefaultRead(ctx, d, meta)...)
 }
 
-func resourceEBSEncryptionByDefaultRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceEBSEncryptionByDefaultRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).EC2Client(ctx)
 
@@ -67,7 +69,7 @@ func resourceEBSEncryptionByDefaultRead(ctx context.Context, d *schema.ResourceD
 	return diags
 }
 
-func resourceEBSEncryptionByDefaultUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceEBSEncryptionByDefaultUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).EC2Client(ctx)
 
@@ -79,7 +81,7 @@ func resourceEBSEncryptionByDefaultUpdate(ctx context.Context, d *schema.Resourc
 	return append(diags, resourceEBSEncryptionByDefaultRead(ctx, d, meta)...)
 }
 
-func resourceEBSEncryptionByDefaultDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceEBSEncryptionByDefaultDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).EC2Client(ctx)
 

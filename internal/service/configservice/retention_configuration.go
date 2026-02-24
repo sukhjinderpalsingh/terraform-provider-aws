@@ -1,5 +1,7 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
+
+// DONOTCOPY: Copying old resources spreads bad habits. Use skaff instead.
 
 package configservice
 
@@ -17,11 +19,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-provider-aws/internal/errs"
 	"github.com/hashicorp/terraform-provider-aws/internal/errs/fwdiag"
 	"github.com/hashicorp/terraform-provider-aws/internal/framework"
 	fwflex "github.com/hashicorp/terraform-provider-aws/internal/framework/flex"
+	"github.com/hashicorp/terraform-provider-aws/internal/retry"
 	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
 	"github.com/hashicorp/terraform-provider-aws/names"
 )
@@ -32,7 +34,7 @@ func newRetentionConfigurationResource(context.Context) (resource.ResourceWithCo
 }
 
 type retentionConfigurationResource struct {
-	framework.ResourceWithConfigure
+	framework.ResourceWithModel[retentionConfigurationResourceModel]
 	framework.WithImportByID
 }
 
@@ -66,7 +68,7 @@ func (r *retentionConfigurationResource) Create(ctx context.Context, request res
 	conn := r.Meta().ConfigServiceClient(ctx)
 
 	input := &configservice.PutRetentionConfigurationInput{
-		RetentionPeriodInDays: fwflex.Int32FromFramework(ctx, data.RetentionPeriodInDays),
+		RetentionPeriodInDays: fwflex.Int32FromFrameworkInt64(ctx, data.RetentionPeriodInDays),
 	}
 
 	output, err := conn.PutRetentionConfiguration(ctx, input)
@@ -102,7 +104,7 @@ func (r *retentionConfigurationResource) Read(ctx context.Context, request resou
 	name := data.ID.ValueString()
 	retentionConfiguration, err := findRetentionConfigurationByName(ctx, conn, name)
 
-	if tfresource.NotFound(err) {
+	if retry.NotFound(err) {
 		response.Diagnostics.Append(fwdiag.NewResourceNotFoundWarningDiagnostic(err))
 		response.State.RemoveResource(ctx)
 
@@ -115,7 +117,7 @@ func (r *retentionConfigurationResource) Read(ctx context.Context, request resou
 		return
 	}
 
-	data.RetentionPeriodInDays = fwflex.Int32ToFramework(ctx, retentionConfiguration.RetentionPeriodInDays)
+	data.RetentionPeriodInDays = fwflex.Int32ToFrameworkInt64(ctx, retentionConfiguration.RetentionPeriodInDays)
 
 	response.Diagnostics.Append(response.State.Set(ctx, &data)...)
 }
@@ -130,7 +132,7 @@ func (r *retentionConfigurationResource) Update(ctx context.Context, request res
 	conn := r.Meta().ConfigServiceClient(ctx)
 
 	input := &configservice.PutRetentionConfigurationInput{
-		RetentionPeriodInDays: fwflex.Int32FromFramework(ctx, new.RetentionPeriodInDays),
+		RetentionPeriodInDays: fwflex.Int32FromFrameworkInt64(ctx, new.RetentionPeriodInDays),
 	}
 
 	_, err := conn.PutRetentionConfiguration(ctx, input)
@@ -197,8 +199,7 @@ func findRetentionConfigurations(ctx context.Context, conn *configservice.Client
 
 		if errs.IsA[*awstypes.NoSuchRetentionConfigurationException](err) {
 			return nil, &retry.NotFoundError{
-				LastError:   err,
-				LastRequest: input,
+				LastError: err,
 			}
 		}
 
@@ -213,6 +214,7 @@ func findRetentionConfigurations(ctx context.Context, conn *configservice.Client
 }
 
 type retentionConfigurationResourceModel struct {
+	framework.WithRegionModel
 	ID                    types.String `tfsdk:"id"`
 	Name                  types.String `tfsdk:"name"`
 	RetentionPeriodInDays types.Int64  `tfsdk:"retention_period_in_days"`

@@ -1,5 +1,7 @@
-// Copyright (c) HashiCorp, Inc.
+// Copyright IBM Corp. 2014, 2026
 // SPDX-License-Identifier: MPL-2.0
+
+// DONOTCOPY: Copying old resources spreads bad habits. Use skaff instead.
 
 package route53recoverycontrolconfig
 
@@ -12,11 +14,11 @@ import (
 	awstypes "github.com/aws/aws-sdk-go-v2/service/route53recoverycontrolconfig/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-aws/internal/conns"
 	"github.com/hashicorp/terraform-provider-aws/internal/errs"
 	"github.com/hashicorp/terraform-provider-aws/internal/errs/sdkdiag"
+	"github.com/hashicorp/terraform-provider-aws/internal/retry"
 	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
 	"github.com/hashicorp/terraform-provider-aws/names"
 )
@@ -58,7 +60,7 @@ func resourceRoutingControl() *schema.Resource {
 	}
 }
 
-func resourceRoutingControlCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceRoutingControlCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).Route53RecoveryControlConfigClient(ctx)
 
@@ -92,13 +94,13 @@ func resourceRoutingControlCreate(ctx context.Context, d *schema.ResourceData, m
 	return append(diags, resourceRoutingControlRead(ctx, d, meta)...)
 }
 
-func resourceRoutingControlRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceRoutingControlRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).Route53RecoveryControlConfigClient(ctx)
 
 	output, err := findRoutingControlByARN(ctx, conn, d.Id())
 
-	if !d.IsNewResource() && tfresource.NotFound(err) {
+	if !d.IsNewResource() && retry.NotFound(err) {
 		log.Printf("[WARN] Route53 Recovery Control Config Routing Control (%s) not found, removing from state", d.Id())
 		d.SetId("")
 		return diags
@@ -116,7 +118,7 @@ func resourceRoutingControlRead(ctx context.Context, d *schema.ResourceData, met
 	return diags
 }
 
-func resourceRoutingControlUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceRoutingControlUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).Route53RecoveryControlConfigClient(ctx)
 
@@ -134,7 +136,7 @@ func resourceRoutingControlUpdate(ctx context.Context, d *schema.ResourceData, m
 	return append(diags, resourceRoutingControlRead(ctx, d, meta)...)
 }
 
-func resourceRoutingControlDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceRoutingControlDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).Route53RecoveryControlConfigClient(ctx)
 
@@ -172,8 +174,7 @@ func findRoutingControlByARN(ctx context.Context, conn *r53rcc.Client, arn strin
 	output, err := conn.DescribeRoutingControl(ctx, input)
 	if errs.IsA[*awstypes.ResourceNotFoundException](err) {
 		return nil, &retry.NotFoundError{
-			LastError:   err,
-			LastRequest: input,
+			LastError: err,
 		}
 	}
 	if err != nil {
@@ -181,7 +182,7 @@ func findRoutingControlByARN(ctx context.Context, conn *r53rcc.Client, arn strin
 	}
 
 	if output == nil || output.RoutingControl == nil {
-		return nil, tfresource.NewEmptyResultError(input)
+		return nil, tfresource.NewEmptyResultError()
 	}
 
 	return output.RoutingControl, nil
