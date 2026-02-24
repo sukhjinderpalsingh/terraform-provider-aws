@@ -714,19 +714,7 @@ func runRoundtripTest[T any](t *testing.T, tc RoundtripTestCase[T], checks runCh
 		}
 		normalizedLines := normalizeLogs(lines)
 
-		// Auto-generate golden path from test hierarchy
-		// Use the full test name which includes the primitive type in the hierarchy
-		// Extract the primitive type and test case name from the full test name
-		// e.g., "TestPrimitivesRoundtrip/Int32/value_standard" -> "Int32_value_standard"
-		fullTestName := t.Name()
-		testCaseName := ""
-		if parts := strings.Split(fullTestName, "/"); len(parts) >= 3 {
-			// parts[0] = "TestPrimitivesRoundtrip", parts[1] = "Int32", parts[2] = "value_standard"
-			testCaseName = strings.ToLower(parts[1]) + "_" + parts[2]
-		} else if lastSlash := strings.LastIndex(fullTestName, "/"); lastSlash != -1 {
-			testCaseName = fullTestName[lastSlash+1:]
-		}
-		goldenFileName := autoGenerateGoldenPath(t, fullTestName, testCaseName)
+		goldenFileName := autoGenerateGoldenPath(t, t.Name())
 		goldenPath := filepath.Join("testdata", goldenFileName)
 		compareWithGolden(t, goldenPath, normalizedLines)
 	}
