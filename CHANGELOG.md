@@ -18,11 +18,13 @@ ENHANCEMENTS:
 * resource/aws_grafana_workspace: Add `kms_key_id` argument ([#46584](https://github.com/hashicorp/terraform-provider-aws/issues/46584))
 * resource/aws_instance: Allow `cpu_options.core_count`, `cpu_options.nested_virtualization`, and `cpu_options.threads_per_core` to be updated in-place ([#46568](https://github.com/hashicorp/terraform-provider-aws/issues/46568))
 * resource/aws_opensearch_domain: Add `jwt_options` attribute ([#46439](https://github.com/hashicorp/terraform-provider-aws/issues/46439))
+* resource/aws_wafv2_web_acl_rule_group_association: Add support for `managed_rule_group_configs` within `managed_rule_group` and root-level `visibility_config` block for CloudWatch metrics configuration ([#44426](https://github.com/hashicorp/terraform-provider-aws/issues/44426))
 
 BUG FIXES:
 
 * data-source/aws_dms_endpoint: Add missing `mongodb_settings.use_update_lookup` attribute to fix "invalid address to set" error ([#46616](https://github.com/hashicorp/terraform-provider-aws/issues/46616))
 * list-resource/aws_s3_object: Includes parent bucket in display name. ([#46596](https://github.com/hashicorp/terraform-provider-aws/issues/46596))
+* resource/aws_autoscaling_group: Fix `couldn't find resource (21 retries)` errors updating `load_balancers`, `target_group_arns`, and `traffic_source` ([#46622](https://github.com/hashicorp/terraform-provider-aws/issues/46622))
 * resource/aws_bedrockagentcore_gateway_target: Add `credential_provider_configuration.oauth.default_return_url` and `credential_provider_configuration.oauth.grant_type` arguments ([#46127](https://github.com/hashicorp/terraform-provider-aws/issues/46127))
 * resource/aws_bedrockagentcore_gateway_target: Retry IAM eventual consistency errors on Create ([#46127](https://github.com/hashicorp/terraform-provider-aws/issues/46127))
 * resource/aws_billing_view: Fix "inconsistent result after apply" errors caused by ordering of `data_filter_expression.dimensions.values` ([#46462](https://github.com/hashicorp/terraform-provider-aws/issues/46462))
