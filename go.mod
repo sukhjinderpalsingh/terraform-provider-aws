@@ -37,7 +37,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/appsync v1.53.2
 	github.com/aws/aws-sdk-go-v2/service/arcregionswitch v1.5.2
 	github.com/aws/aws-sdk-go-v2/service/arczonalshift v1.22.20
-	github.com/aws/aws-sdk-go-v2/service/athena v1.57.0
+	github.com/aws/aws-sdk-go-v2/service/athena v1.57.1
 	github.com/aws/aws-sdk-go-v2/service/auditmanager v1.46.8
 	github.com/aws/aws-sdk-go-v2/service/autoscaling v1.64.0
 	github.com/aws/aws-sdk-go-v2/service/autoscalingplans v1.30.10
