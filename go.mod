@@ -156,7 +156,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/kinesisanalyticsv2 v1.36.21
 	github.com/aws/aws-sdk-go-v2/service/kinesisvideo v1.33.5
 	github.com/aws/aws-sdk-go-v2/service/kms v1.50.1
-	github.com/aws/aws-sdk-go-v2/service/lakeformation v1.47.1
+	github.com/aws/aws-sdk-go-v2/service/lakeformation v1.47.2
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.88.0
 	github.com/aws/aws-sdk-go-v2/service/launchwizard v1.14.0
 	github.com/aws/aws-sdk-go-v2/service/lexmodelbuildingservice v1.34.10
