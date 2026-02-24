@@ -505,7 +505,7 @@ func waitConnectionCreated(ctx context.Context, conn *eventbridge.Client, name s
 	)
 	stateConf := &retry.StateChangeConf{
 		Pending: enum.Slice(types.ConnectionStateCreating, types.ConnectionStateAuthorizing),
-		Target:  enum.Slice(types.ConnectionStateAuthorized, types.ConnectionStateDeauthorized, types.ConnectionStateAuthorizing, types.ConnectionStateActive),
+		Target:  enum.Slice(types.ConnectionStateAuthorized, types.ConnectionStateActive),
 		Refresh: statusConnectionState(conn, name),
 		Timeout: timeout,
 	}
@@ -527,7 +527,7 @@ func waitConnectionUpdated(ctx context.Context, conn *eventbridge.Client, name s
 	)
 	stateConf := &retry.StateChangeConf{
 		Pending: enum.Slice(types.ConnectionStateUpdating, types.ConnectionStateAuthorizing, types.ConnectionStateDeauthorizing),
-		Target:  enum.Slice(types.ConnectionStateAuthorized, types.ConnectionStateDeauthorized, types.ConnectionStateAuthorizing, types.ConnectionStateActive),
+		Target:  enum.Slice(types.ConnectionStateAuthorized, types.ConnectionStateDeauthorized, types.ConnectionStateActive),
 		Refresh: statusConnectionState(conn, name),
 		Timeout: timeout,
 	}
