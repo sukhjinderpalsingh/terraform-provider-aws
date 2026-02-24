@@ -1,6 +1,15 @@
 # Copyright IBM Corp. 2014, 2026
 # SPDX-License-Identifier: MPL-2.0
 
+resource "aws_ecs_service" "test" {
+  region = var.region
+
+  name            = var.rName
+  cluster         = aws_ecs_cluster.test.arn
+  task_definition = aws_ecs_task_definition.test.arn
+  desired_count   = 1
+}
+
 resource "aws_ecs_cluster" "test" {
   region = var.region
 
@@ -25,14 +34,6 @@ resource "aws_ecs_task_definition" "test" {
 DEFINITION
 }
 
-resource "aws_ecs_service" "test" {
-  region = var.region
-
-  name            = var.rName
-  cluster         = aws_ecs_cluster.test.arn
-  task_definition = aws_ecs_task_definition.test.arn
-  desired_count   = 1
-}
 variable "rName" {
   description = "Name for resource"
   type        = string
