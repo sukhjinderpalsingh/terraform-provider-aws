@@ -164,7 +164,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/licensemanager v1.37.7
 	github.com/aws/aws-sdk-go-v2/service/lightsail v1.50.12
 	github.com/aws/aws-sdk-go-v2/service/location v1.50.10
-	github.com/aws/aws-sdk-go-v2/service/m2 v1.26.10
+	github.com/aws/aws-sdk-go-v2/service/m2 v1.26.11
 	github.com/aws/aws-sdk-go-v2/service/macie2 v1.50.9
 	github.com/aws/aws-sdk-go-v2/service/mediaconnect v1.47.0
 	github.com/aws/aws-sdk-go-v2/service/mediaconvert v1.87.0
