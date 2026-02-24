@@ -20,32 +20,32 @@ func TestAccAccountRegionsDataSource_basic(t *testing.T) {
 	dataSourceName := "data.aws_account_regions.test"
 
 	acctest.ParallelTest(ctx, t, resource.TestCase{
- 		PreCheck: func() {
- 			acctest.PreCheck(ctx, t)
- 			testAccPreCheck(ctx, t)
- 		},
- 		ErrorCheck:               acctest.ErrorCheck(t, names.AccountServiceID),
- 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
- 		CheckDestroy:             acctest.CheckDestroyNoop,
- 		Steps: []resource.TestStep{
- 			{
- 				Config: `data "aws_account_regions" "test" {}`,
- 				Check:  resource.TestCheckResourceAttrSet(dataSourceName, "regions.#"),
- 			},
- 			{
- 				Config: testAccRegionsDataSourceConfig_status(string(awstypes.RegionOptStatusEnabledByDefault)),
- 				Check: resource.TestCheckTypeSetElemNestedAttrs(dataSourceName, "regions.*", map[string]string{
- 					"region_opt_status": string(awstypes.RegionOptStatusEnabledByDefault),
- 				}),
- 			},
- 			{
- 				Config: testAccRegionsDataSourceConfig_status(string(awstypes.RegionOptStatusDisabled)),
- 				Check: resource.TestCheckTypeSetElemNestedAttrs(dataSourceName, "regions.*", map[string]string{
- 					"region_opt_status": string(awstypes.RegionOptStatusDisabled),
- 				}),
- 			},
- 		},
- 	})
+		PreCheck: func() {
+			acctest.PreCheck(ctx, t)
+			testAccPreCheck(ctx, t)
+		},
+		ErrorCheck:               acctest.ErrorCheck(t, names.AccountServiceID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             acctest.CheckDestroyNoop,
+		Steps: []resource.TestStep{
+			{
+				Config: `data "aws_account_regions" "test" {}`,
+				Check:  resource.TestCheckResourceAttrSet(dataSourceName, "regions.#"),
+			},
+			{
+				Config: testAccRegionsDataSourceConfig_status(string(awstypes.RegionOptStatusEnabledByDefault)),
+				Check: resource.TestCheckTypeSetElemNestedAttrs(dataSourceName, "regions.*", map[string]string{
+					"region_opt_status": string(awstypes.RegionOptStatusEnabledByDefault),
+				}),
+			},
+			{
+				Config: testAccRegionsDataSourceConfig_status(string(awstypes.RegionOptStatusDisabled)),
+				Check: resource.TestCheckTypeSetElemNestedAttrs(dataSourceName, "regions.*", map[string]string{
+					"region_opt_status": string(awstypes.RegionOptStatusDisabled),
+				}),
+			},
+		},
+	})
 }
 
 func testAccRegionsDataSourceConfig_status(status string) string {

@@ -1196,45 +1196,45 @@ func TestAccOpenSearchDomain_AdvancedSecurityOptions_jwtOptions(t *testing.T) {
 	resourceName := "aws_opensearch_domain.test"
 
 	acctest.ParallelTest(ctx, t, resource.TestCase{
- 		PreCheck:                 func() { acctest.PreCheck(ctx, t); testAccPreCheckIAMServiceLinkedRole(ctx, t) },
- 		ErrorCheck:               acctest.ErrorCheck(t, names.OpenSearchServiceID),
- 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
- 		CheckDestroy:             testAccCheckDomainDestroy(ctx, t),
- 		Steps: []resource.TestStep{
- 			{
- 				Config: testAccDomainConfig_advancedSecurityOptionsJWTOptions(rName, "OpenSearch", "2.11", "sub", "roles"),
- 				Check: resource.ComposeTestCheckFunc(
- 					testAccCheckDomainExists(ctx, t, resourceName, &domain),
- 					testAccCheckAdvancedSecurityOptions(true, true, false, &domain),
- 					resource.TestCheckResourceAttr(resourceName, "advanced_security_options.0.jwt_options.#", "1"),
- 					resource.TestCheckResourceAttr(resourceName, "advanced_security_options.0.jwt_options.0.enabled", acctest.CtTrue),
- 					resource.TestCheckResourceAttr(resourceName, "advanced_security_options.0.jwt_options.0.subject_key", "sub"),
- 					resource.TestCheckResourceAttr(resourceName, "advanced_security_options.0.jwt_options.0.roles_key", "roles"),
- 				),
- 			},
- 			{
- 				Config: testAccDomainConfig_advancedSecurityOptionsJWTOptions(rName, "OpenSearch", "2.11", names.AttrEmail, "groups"),
- 				Check: resource.ComposeTestCheckFunc(
- 					testAccCheckDomainExists(ctx, t, resourceName, &domain),
- 					testAccCheckAdvancedSecurityOptions(true, true, false, &domain),
- 					resource.TestCheckResourceAttr(resourceName, "advanced_security_options.0.jwt_options.#", "1"),
- 					resource.TestCheckResourceAttr(resourceName, "advanced_security_options.0.jwt_options.0.enabled", acctest.CtTrue),
- 					resource.TestCheckResourceAttr(resourceName, "advanced_security_options.0.jwt_options.0.subject_key", names.AttrEmail),
- 					resource.TestCheckResourceAttr(resourceName, "advanced_security_options.0.jwt_options.0.roles_key", "groups"),
- 				),
- 			},
- 			{
- 				ResourceName:      resourceName,
- 				ImportState:       true,
- 				ImportStateId:     rName,
- 				ImportStateVerify: true,
- 				ImportStateVerifyIgnore: []string{
- 					"advanced_security_options.0.internal_user_database_enabled",
- 					"advanced_security_options.0.master_user_options",
- 				},
- 			},
- 		},
- 	})
+		PreCheck:                 func() { acctest.PreCheck(ctx, t); testAccPreCheckIAMServiceLinkedRole(ctx, t) },
+		ErrorCheck:               acctest.ErrorCheck(t, names.OpenSearchServiceID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckDomainDestroy(ctx, t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDomainConfig_advancedSecurityOptionsJWTOptions(rName, "OpenSearch", "2.11", "sub", "roles"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDomainExists(ctx, t, resourceName, &domain),
+					testAccCheckAdvancedSecurityOptions(true, true, false, &domain),
+					resource.TestCheckResourceAttr(resourceName, "advanced_security_options.0.jwt_options.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "advanced_security_options.0.jwt_options.0.enabled", acctest.CtTrue),
+					resource.TestCheckResourceAttr(resourceName, "advanced_security_options.0.jwt_options.0.subject_key", "sub"),
+					resource.TestCheckResourceAttr(resourceName, "advanced_security_options.0.jwt_options.0.roles_key", "roles"),
+				),
+			},
+			{
+				Config: testAccDomainConfig_advancedSecurityOptionsJWTOptions(rName, "OpenSearch", "2.11", names.AttrEmail, "groups"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDomainExists(ctx, t, resourceName, &domain),
+					testAccCheckAdvancedSecurityOptions(true, true, false, &domain),
+					resource.TestCheckResourceAttr(resourceName, "advanced_security_options.0.jwt_options.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "advanced_security_options.0.jwt_options.0.enabled", acctest.CtTrue),
+					resource.TestCheckResourceAttr(resourceName, "advanced_security_options.0.jwt_options.0.subject_key", names.AttrEmail),
+					resource.TestCheckResourceAttr(resourceName, "advanced_security_options.0.jwt_options.0.roles_key", "groups"),
+				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateId:     rName,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"advanced_security_options.0.internal_user_database_enabled",
+					"advanced_security_options.0.master_user_options",
+				},
+			},
+		},
+	})
 }
 
 func TestAccOpenSearchDomain_AdvancedSecurityOptions_jwtOptions_versionValidation(t *testing.T) {
