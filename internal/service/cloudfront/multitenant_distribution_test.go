@@ -191,33 +191,33 @@ func TestAccCloudFrontMultiTenantDistribution_customErrorResponseWithoutResponse
 	var distribution awstypes.Distribution
 	resourceName := "aws_cloudfront_multitenant_distribution.test"
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheck(ctx, t); acctest.PreCheckPartitionHasService(t, names.CloudFrontEndpointID) },
-		ErrorCheck:               acctest.ErrorCheck(t, names.CloudFrontServiceID),
-		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckMultiTenantDistributionDestroy(ctx, t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMultiTenantDistributionConfig_customErrorResponseWithoutResponsePagePath(),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMultiTenantDistributionExists(ctx, t, resourceName, &distribution),
-					resource.TestCheckResourceAttr(resourceName, names.AttrEnabled, acctest.CtFalse),
-					resource.TestCheckResourceAttr(resourceName, "tenant_config.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "tenant_config.0.parameter_definition.0.definition.0.string_schema.0.required", acctest.CtTrue),
-					resource.TestCheckResourceAttr(resourceName, "custom_error_response.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "custom_error_response.0.error_code", "404"),
-					resource.TestCheckNoResourceAttr(resourceName, "custom_error_response.0.response_code"),
-					resource.TestCheckNoResourceAttr(resourceName, "custom_error_response.0.response_page_path"),
-				),
-			},
-			{
-				ResourceName:            resourceName,
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"etag"},
-			},
-		},
-	})
+	acctest.Test(ctx, t, resource.TestCase{
+ 		PreCheck:                 func() { acctest.PreCheck(ctx, t); acctest.PreCheckPartitionHasService(t, names.CloudFrontEndpointID) },
+ 		ErrorCheck:               acctest.ErrorCheck(t, names.CloudFrontServiceID),
+ 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+ 		CheckDestroy:             testAccCheckMultiTenantDistributionDestroy(ctx, t),
+ 		Steps: []resource.TestStep{
+ 			{
+ 				Config: testAccMultiTenantDistributionConfig_customErrorResponseWithoutResponsePagePath(),
+ 				Check: resource.ComposeTestCheckFunc(
+ 					testAccCheckMultiTenantDistributionExists(ctx, t, resourceName, &distribution),
+ 					resource.TestCheckResourceAttr(resourceName, names.AttrEnabled, acctest.CtFalse),
+ 					resource.TestCheckResourceAttr(resourceName, "tenant_config.#", "1"),
+ 					resource.TestCheckResourceAttr(resourceName, "tenant_config.0.parameter_definition.0.definition.0.string_schema.0.required", acctest.CtTrue),
+ 					resource.TestCheckResourceAttr(resourceName, "custom_error_response.#", "1"),
+ 					resource.TestCheckResourceAttr(resourceName, "custom_error_response.0.error_code", "404"),
+ 					resource.TestCheckNoResourceAttr(resourceName, "custom_error_response.0.response_code"),
+ 					resource.TestCheckNoResourceAttr(resourceName, "custom_error_response.0.response_page_path"),
+ 				),
+ 			},
+ 			{
+ 				ResourceName:            resourceName,
+ 				ImportState:             true,
+ 				ImportStateVerify:       true,
+ 				ImportStateVerifyIgnore: []string{"etag"},
+ 			},
+ 		},
+ 	})
 }
 
 func TestAccCloudFrontMultiTenantDistribution_tags(t *testing.T) {
