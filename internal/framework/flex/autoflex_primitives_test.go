@@ -19,7 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflogtest"
-	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	sdkacctest "github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 )
 
 // TestPrimitivesRoundtrip is the proof of concept for string roundtrip testing
@@ -113,7 +113,7 @@ func testStringRoundtrip(t *testing.T) {
 		// Random value for property-based testing feel
 		{
 			name:        "random_value",
-			stringValue: acctest.RandomWithPrefix("tf-test"),
+			stringValue: sdkacctest.RandomWithPrefix("tf-test"),
 			variants:    []string{"standard", "legacy", "tf_to_aws_pointer", "legacy_tf_to_aws_pointer"},
 		},
 		// Omitempty tests - flatten-only (expand direction not defined in original tests)
