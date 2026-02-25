@@ -165,6 +165,7 @@ resource "aws_cloudwatch_event_connection" "test" {
     }
   }
 }
+```
 
 ## Example Usage CMK Encryption
 
