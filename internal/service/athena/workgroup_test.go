@@ -1923,11 +1923,11 @@ func TestAccAthenaWorkGroup_monitoringConfiguration(t *testing.T) {
 func TestAccAthenaWorkGroup_QueryResultsS3AccessGrantsConfiguration_basic(t *testing.T) {
 	ctx := acctest.Context(t)
 	var workgroup1 types.WorkGroup
-	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	resourceName := "aws_athena_workgroup.test"
 	iamRoleResourceName := "aws_iam_role.test"
 
-	resource.Test(t, resource.TestCase{
+	acctest.Test(ctx, t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheck(ctx, t)
 			acctest.PreCheckSSOAdminInstances(ctx, t)
@@ -1963,10 +1963,10 @@ func TestAccAthenaWorkGroup_QueryResultsS3AccessGrantsConfiguration_basic(t *tes
 func TestAccAthenaWorkGroup_QueryResultsS3AccessGrantsConfiguration_update(t *testing.T) {
 	ctx := acctest.Context(t)
 	var workgroup1, workgroup2 types.WorkGroup
-	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 	resourceName := "aws_athena_workgroup.test"
 
-	resource.Test(t, resource.TestCase{
+	acctest.Test(ctx, t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheck(ctx, t)
 			acctest.PreCheckSSOAdminInstances(ctx, t)
