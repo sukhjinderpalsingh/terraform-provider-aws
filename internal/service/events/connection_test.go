@@ -379,12 +379,10 @@ func TestAccEventsConnection_connectivityParameters(t *testing.T) {
 	ctx := acctest.Context(t)
 	var v1, v2 eventbridge.DescribeConnectionOutput
 	name := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
-	nameModified := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 
 	oAuthorizationType := "OAUTH_CLIENT_CREDENTIALS"
 
 	description := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
-	descriptionModified := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 
 	// oauth
 	authorizationEndpoint := "https://example.com/auth"
@@ -450,8 +448,10 @@ func TestAccEventsConnection_connectivityParameters(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.oauth_http_parameters.0.query_string.0.is_value_secret", strconv.FormatBool(queryStringIsSecretValue)),
 					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.connectivity_parameters.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.connectivity_parameters.0.resource_parameters.#", "1"),
+					resource.TestCheckResourceAttrPair(resourceName, "auth_parameters.0.connectivity_parameters.0.resource_parameters.0.resource_configuration_arn", "aws_vpclattice_resource_configuration.test", names.AttrARN),
 					resource.TestCheckResourceAttr(resourceName, "invocation_connectivity_parameters.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "invocation_connectivity_parameters.0.resource_parameters.#", "1"),
+					resource.TestCheckResourceAttrPair(resourceName, "invocation_connectivity_parameters.0.resource_parameters.0.resource_configuration_arn", "aws_vpclattice_resource_configuration.test", names.AttrARN),
 				),
 			},
 			{
@@ -466,9 +466,9 @@ func TestAccEventsConnection_connectivityParameters(t *testing.T) {
 				},
 			},
 			{
-				Config: testAccConnectionConfig_oauthConnectivityParameters(
-					nameModified,
-					descriptionModified,
+				Config: testAccConnectionConfig_oauthConnectivityParametersUpdated(
+					name,
+					description,
 					oAuthorizationType,
 					authorizationEndpoint,
 					httpMethod,
@@ -486,23 +486,16 @@ func TestAccEventsConnection_connectivityParameters(t *testing.T) {
 				),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnectionExists(ctx, t, resourceName, &v2),
-					testAccCheckConnectionRecreated(&v1, &v2),
-					resource.TestCheckResourceAttr(resourceName, names.AttrName, nameModified),
-					resource.TestCheckResourceAttr(resourceName, names.AttrDescription, descriptionModified),
+					testAccCheckConnectionNotRecreated(&v1, &v2),
+					resource.TestCheckResourceAttr(resourceName, names.AttrName, name),
+					resource.TestCheckResourceAttr(resourceName, names.AttrDescription, description),
 					resource.TestCheckResourceAttr(resourceName, "authorization_type", oAuthorizationType),
-					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.authorization_endpoint", authorizationEndpoint),
-					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.http_method", httpMethod),
-					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.client_parameters.0.client_id", clientID),
-					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.oauth_http_parameters.0.body.0.key", bodyKey),
-					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.oauth_http_parameters.0.body.0.is_value_secret", strconv.FormatBool(bodyIsSecretValue)),
-					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.oauth_http_parameters.0.header.0.key", headerKey),
-					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.oauth_http_parameters.0.header.0.is_value_secret", strconv.FormatBool(headerIsSecretValue)),
-					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.oauth_http_parameters.0.query_string.0.key", queryStringKey),
-					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.oauth.0.oauth_http_parameters.0.query_string.0.is_value_secret", strconv.FormatBool(queryStringIsSecretValue)),
 					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.connectivity_parameters.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "auth_parameters.0.connectivity_parameters.0.resource_parameters.#", "1"),
+					resource.TestCheckResourceAttrPair(resourceName, "auth_parameters.0.connectivity_parameters.0.resource_parameters.0.resource_configuration_arn", "aws_vpclattice_resource_configuration.test2", names.AttrARN),
 					resource.TestCheckResourceAttr(resourceName, "invocation_connectivity_parameters.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "invocation_connectivity_parameters.0.resource_parameters.#", "1"),
+					resource.TestCheckResourceAttrPair(resourceName, "invocation_connectivity_parameters.0.resource_parameters.0.resource_configuration_arn", "aws_vpclattice_resource_configuration.test2", names.AttrARN),
 				),
 			},
 		},
@@ -1147,6 +1140,125 @@ resource "aws_cloudwatch_event_connection" "oauth" {
     connectivity_parameters {
       resource_parameters {
         resource_configuration_arn = aws_vpclattice_resource_configuration.test.arn
+      }
+    }
+    oauth {
+      authorization_endpoint = %[4]q
+      http_method            = %[5]q
+      client_parameters {
+        client_id     = %[6]q
+        client_secret = %[7]q
+      }
+
+      oauth_http_parameters {
+        body {
+          key             = %[8]q
+          value           = %[9]q
+          is_value_secret = %[10]t
+        }
+
+        header {
+          key             = %[11]q
+          value           = %[12]q
+          is_value_secret = %[13]t
+        }
+
+        query_string {
+          key             = %[14]q
+          value           = %[15]q
+          is_value_secret = %[16]t
+        }
+      }
+    }
+  }
+}
+`, name,
+		description,
+		authorizationType,
+		authorizationEndpoint,
+		httpMethod,
+		clientID,
+		clientSecret,
+		bodyKey,
+		bodyValue,
+		bodyIsSecretValue,
+		headerKey,
+		headerValue,
+		headerIsSecretValue,
+		queryStringKey,
+		queryStringValue,
+		queryStringIsSecretValue))
+}
+
+func testAccConnectionConfig_oauthConnectivityParametersUpdated(
+	name,
+	description,
+	authorizationType,
+	authorizationEndpoint,
+	httpMethod,
+	clientID,
+	clientSecret string,
+	bodyKey string,
+	bodyValue string,
+	bodyIsSecretValue bool,
+	headerKey string,
+	headerValue string,
+	headerIsSecretValue bool,
+	queryStringKey string,
+	queryStringValue string,
+	queryStringIsSecretValue bool) string {
+	return acctest.ConfigCompose(acctest.ConfigVPCWithSubnets(name, 1), fmt.Sprintf(`
+resource "aws_vpclattice_resource_gateway" "test" {
+  name       = %[1]q
+  vpc_id     = aws_vpc.test.id
+  subnet_ids = aws_subnet.test[*].id
+}
+
+resource "aws_vpclattice_resource_configuration" "test" {
+  name = %[1]q
+
+  resource_gateway_identifier = aws_vpclattice_resource_gateway.test.id
+
+  port_ranges = ["80"]
+  protocol    = "TCP"
+
+  resource_configuration_definition {
+    dns_resource {
+      domain_name     = "example.com"
+      ip_address_type = "IPV4"
+    }
+  }
+}
+
+resource "aws_vpclattice_resource_configuration" "test2" {
+  name = "%[1]s-updated"
+
+  resource_gateway_identifier = aws_vpclattice_resource_gateway.test.id
+
+  port_ranges = ["443"]
+  protocol    = "TCP"
+
+  resource_configuration_definition {
+    dns_resource {
+      domain_name     = "example.com"
+      ip_address_type = "IPV4"
+    }
+  }
+}
+
+resource "aws_cloudwatch_event_connection" "oauth" {
+  name               = %[1]q
+  description        = %[2]q
+  authorization_type = %[3]q
+  invocation_connectivity_parameters {
+    resource_parameters {
+      resource_configuration_arn = aws_vpclattice_resource_configuration.test2.arn
+    }
+  }
+  auth_parameters {
+    connectivity_parameters {
+      resource_parameters {
+        resource_configuration_arn = aws_vpclattice_resource_configuration.test2.arn
       }
     }
     oauth {
