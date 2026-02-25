@@ -12,6 +12,7 @@ ENHANCEMENTS:
 
 * data-source/aws_grafana_workspace: Add `kms_key_id` attribute ([#46584](https://github.com/hashicorp/terraform-provider-aws/issues/46584))
 * data-source/aws_memorydb_cluster: Add `network_type` and `ip_discovery` attributes ([#46636](https://github.com/hashicorp/terraform-provider-aws/issues/46636))
+* resource/aws_athena_workgroup: Add `configuration.query_results_s3_access_grants_configuration` argument ([#46376](https://github.com/hashicorp/terraform-provider-aws/issues/46376))
 * resource/aws_bedrockagentcore_api_key_credential_provider: Add tagging support ([#46591](https://github.com/hashicorp/terraform-provider-aws/issues/46591))
 * resource/aws_bedrockagentcore_gateway_target: Add `metadata_configuration` block for HTTP header and query parameter propagation ([#45808](https://github.com/hashicorp/terraform-provider-aws/issues/45808))
 * resource/aws_bedrockagentcore_oauth2_credential_provider: Add tagging support ([#46590](https://github.com/hashicorp/terraform-provider-aws/issues/46590))
