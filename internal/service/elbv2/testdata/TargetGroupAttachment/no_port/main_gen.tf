@@ -14,7 +14,7 @@ resource "aws_lb_target_group" "test" {
 }
 
 resource "aws_instance" "test" {
-  ami           = data.aws_ami.amzn2_ami_minimal_hvm_ebs_x86_64.id
+  ami           = data.aws_ami.amzn2-ami-minimal-hvm-ebs-x86_64.id
   instance_type = "t3.micro"
   subnet_id     = aws_subnet.test[0].id
 }
@@ -45,13 +45,23 @@ locals {
   default_exclude_zone_ids = ["usw2-az4", "usgw1-az2"]
 }
 
-data "aws_ami" "amzn2_ami_minimal_hvm_ebs_x86_64" {
+data "aws_ami" "amzn2-ami-minimal-hvm-ebs-x86_64" {
   most_recent = true
   owners      = ["amazon"]
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-minimal-hvm-*-x86_64-ebs"]
+    values = ["amzn2-ami-minimal-hvm-*"]
+  }
+
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
   }
 }
 
