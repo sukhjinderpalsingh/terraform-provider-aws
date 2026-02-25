@@ -14,6 +14,7 @@ ENHANCEMENTS:
 * resource/aws_bedrockagentcore_api_key_credential_provider: Add tagging support ([#46591](https://github.com/hashicorp/terraform-provider-aws/issues/46591))
 * resource/aws_bedrockagentcore_gateway_target: Add `metadata_configuration` block for HTTP header and query parameter propagation ([#45808](https://github.com/hashicorp/terraform-provider-aws/issues/45808))
 * resource/aws_bedrockagentcore_oauth2_credential_provider: Add tagging support ([#46590](https://github.com/hashicorp/terraform-provider-aws/issues/46590))
+* resource/aws_cloudwatch_event_connection: Add `auth_parameters.connectivity_parameters` argument ([#41561](https://github.com/hashicorp/terraform-provider-aws/issues/41561))
 * resource/aws_ecs_service: Add `service_connect_configuration.access_log_configuration` argument ([#45820](https://github.com/hashicorp/terraform-provider-aws/issues/45820))
 * resource/aws_ecs_service: Add resource identity support ([#46644](https://github.com/hashicorp/terraform-provider-aws/issues/46644))
 * resource/aws_eip_domain_name: Add import support ([#46582](https://github.com/hashicorp/terraform-provider-aws/issues/46582))
