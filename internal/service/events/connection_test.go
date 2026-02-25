@@ -466,7 +466,7 @@ func TestAccEventsConnection_connectivityParameters(t *testing.T) {
 				},
 			},
 			{
-				Config: testAccConnectionConfig_oauthConnectivityParametersUpdated(
+				Config: testAccConnectionConfig_oauthConnectivityParameters(
 					name,
 					description,
 					oAuthorizationType,
@@ -483,6 +483,7 @@ func TestAccEventsConnection_connectivityParameters(t *testing.T) {
 					queryStringKey,
 					queryStringValue,
 					queryStringIsSecretValue,
+					true,
 				),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnectionExists(ctx, t, resourceName, &v2),
@@ -1103,135 +1104,17 @@ func testAccConnectionConfig_oauthConnectivityParameters(
 	headerIsSecretValue bool,
 	queryStringKey string,
 	queryStringValue string,
-	queryStringIsSecretValue bool) string {
-	return acctest.ConfigCompose(acctest.ConfigVPCWithSubnets(name, 1), fmt.Sprintf(`
-resource "aws_vpclattice_resource_gateway" "test" {
-  name       = %[1]q
-  vpc_id     = aws_vpc.test.id
-  subnet_ids = aws_subnet.test[*].id
-}
+	queryStringIsSecretValue bool,
+	updated ...bool) string {
+	useUpdated := len(updated) > 0 && updated[0]
 
-resource "aws_vpclattice_resource_configuration" "test" {
-  name = %[1]q
-
-  resource_gateway_identifier = aws_vpclattice_resource_gateway.test.id
-
-  port_ranges = ["80"]
-  protocol    = "TCP"
-
-  resource_configuration_definition {
-    dns_resource {
-      domain_name     = "example.com"
-      ip_address_type = "IPV4"
-    }
-  }
-}
-
-resource "aws_cloudwatch_event_connection" "oauth" {
-  name               = %[1]q
-  description        = %[2]q
-  authorization_type = %[3]q
-  invocation_connectivity_parameters {
-    resource_parameters {
-      resource_configuration_arn = aws_vpclattice_resource_configuration.test.arn
-    }
-  }
-  auth_parameters {
-    connectivity_parameters {
-      resource_parameters {
-        resource_configuration_arn = aws_vpclattice_resource_configuration.test.arn
-      }
-    }
-    oauth {
-      authorization_endpoint = %[4]q
-      http_method            = %[5]q
-      client_parameters {
-        client_id     = %[6]q
-        client_secret = %[7]q
-      }
-
-      oauth_http_parameters {
-        body {
-          key             = %[8]q
-          value           = %[9]q
-          is_value_secret = %[10]t
-        }
-
-        header {
-          key             = %[11]q
-          value           = %[12]q
-          is_value_secret = %[13]t
-        }
-
-        query_string {
-          key             = %[14]q
-          value           = %[15]q
-          is_value_secret = %[16]t
-        }
-      }
-    }
-  }
-}
-`, name,
-		description,
-		authorizationType,
-		authorizationEndpoint,
-		httpMethod,
-		clientID,
-		clientSecret,
-		bodyKey,
-		bodyValue,
-		bodyIsSecretValue,
-		headerKey,
-		headerValue,
-		headerIsSecretValue,
-		queryStringKey,
-		queryStringValue,
-		queryStringIsSecretValue))
-}
-
-func testAccConnectionConfig_oauthConnectivityParametersUpdated(
-	name,
-	description,
-	authorizationType,
-	authorizationEndpoint,
-	httpMethod,
-	clientID,
-	clientSecret string,
-	bodyKey string,
-	bodyValue string,
-	bodyIsSecretValue bool,
-	headerKey string,
-	headerValue string,
-	headerIsSecretValue bool,
-	queryStringKey string,
-	queryStringValue string,
-	queryStringIsSecretValue bool) string {
-	return acctest.ConfigCompose(acctest.ConfigVPCWithSubnets(name, 1), fmt.Sprintf(`
-resource "aws_vpclattice_resource_gateway" "test" {
-  name       = %[1]q
-  vpc_id     = aws_vpc.test.id
-  subnet_ids = aws_subnet.test[*].id
-}
-
-resource "aws_vpclattice_resource_configuration" "test" {
-  name = %[1]q
-
-  resource_gateway_identifier = aws_vpclattice_resource_gateway.test.id
-
-  port_ranges = ["80"]
-  protocol    = "TCP"
-
-  resource_configuration_definition {
-    dns_resource {
-      domain_name     = "example.com"
-      ip_address_type = "IPV4"
-    }
-  }
-}
-
+	resourceConfigRef := "aws_vpclattice_resource_configuration.test"
+	additionalResourceConfig := ""
+	if useUpdated {
+		resourceConfigRef = "aws_vpclattice_resource_configuration.test2"
+		additionalResourceConfig = fmt.Sprintf(`
 resource "aws_vpclattice_resource_configuration" "test2" {
-  name = "%[1]s-updated"
+  name = "%s-updated"
 
   resource_gateway_identifier = aws_vpclattice_resource_gateway.test.id
 
@@ -1245,6 +1128,31 @@ resource "aws_vpclattice_resource_configuration" "test2" {
     }
   }
 }
+`, name)
+	}
+
+	return acctest.ConfigCompose(acctest.ConfigVPCWithSubnets(name, 1), additionalResourceConfig, fmt.Sprintf(`
+resource "aws_vpclattice_resource_gateway" "test" {
+  name       = %[1]q
+  vpc_id     = aws_vpc.test.id
+  subnet_ids = aws_subnet.test[*].id
+}
+
+resource "aws_vpclattice_resource_configuration" "test" {
+  name = %[1]q
+
+  resource_gateway_identifier = aws_vpclattice_resource_gateway.test.id
+
+  port_ranges = ["80"]
+  protocol    = "TCP"
+
+  resource_configuration_definition {
+    dns_resource {
+      domain_name     = "example.com"
+      ip_address_type = "IPV4"
+    }
+  }
+}
 
 resource "aws_cloudwatch_event_connection" "oauth" {
   name               = %[1]q
@@ -1252,13 +1160,13 @@ resource "aws_cloudwatch_event_connection" "oauth" {
   authorization_type = %[3]q
   invocation_connectivity_parameters {
     resource_parameters {
-      resource_configuration_arn = aws_vpclattice_resource_configuration.test2.arn
+      resource_configuration_arn = %[17]s.arn
     }
   }
   auth_parameters {
     connectivity_parameters {
       resource_parameters {
-        resource_configuration_arn = aws_vpclattice_resource_configuration.test2.arn
+        resource_configuration_arn = %[17]s.arn
       }
     }
     oauth {
@@ -1306,7 +1214,8 @@ resource "aws_cloudwatch_event_connection" "oauth" {
 		headerIsSecretValue,
 		queryStringKey,
 		queryStringValue,
-		queryStringIsSecretValue))
+		queryStringIsSecretValue,
+		resourceConfigRef))
 }
 
 func testAccConnectionConfig_invocationConnectivityParameters(rName string) string {
