@@ -361,7 +361,7 @@ func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceLoadBalancerFlatten(ctx context.Context, awsClient *conns.AWSClient, lb *awstypes.LoadBalancerDescription, lbAttrs *awstypes.LoadBalancerAttributes, d *schema.ResourceData) error {
-	d.Set(names.AttrARN,  awsClient.RegionalARN(ctx, "elasticloadbalancing", "loadbalancer/"+d.Id()))
+	d.Set(names.AttrARN, awsClient.RegionalARN(ctx, "elasticloadbalancing", "loadbalancer/"+d.Id()))
 	d.Set(names.AttrAvailabilityZones, lb.AvailabilityZones)
 	d.Set("connection_draining", lbAttrs.ConnectionDraining.Enabled)
 	d.Set("connection_draining_timeout", lbAttrs.ConnectionDraining.Timeout)
