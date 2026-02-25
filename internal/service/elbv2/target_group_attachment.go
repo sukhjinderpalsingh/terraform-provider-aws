@@ -35,6 +35,7 @@ import (
 // @IdentityAttribute("target_id")
 // @IdentityAttribute("port", valueType="int", optional="true", testNotNull="true")
 // @IdentityAttribute("availability_zone", optional="true")
+// @IdentityAttribute("quic_server_id", optional="true")
 // @MutableIdentity
 // @ImportIDHandler("targetGroupAttachmentImportID")
 // @Testing(preIdentityVersion="v6.33.0")
