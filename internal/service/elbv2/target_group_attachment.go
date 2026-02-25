@@ -153,6 +153,10 @@ func resourceAttachmentRead(ctx context.Context, d *schema.ResourceData, meta an
 		return sdkdiag.AppendErrorf(diags, "reading ELBv2 Target Group Attachment (%s): %s", d.Id(), err)
 	}
 
+	if target == nil || target.Target == nil {
+		return sdkdiag.AppendErrorf(diags, "reading ELBv2 Target Group Attachment (%s): target not found", d.Id())
+	}
+
 	d.Set("target_group_arn", targetGroupARN)
 	d.Set("target_id", target.Target.Id)
 
@@ -280,7 +284,7 @@ func (targetGroupAttachmentImportID) Create(d *schema.ResourceData) string {
 
 	if v, ok := d.GetOk(names.AttrAvailabilityZone); ok {
 		if len(parts) == 2 {
-			parts = append(parts, "") // placeholder for port
+			parts = append(parts, "") // placeholder for port when only AZ is set
 		}
 		parts = append(parts, v.(string))
 	}
