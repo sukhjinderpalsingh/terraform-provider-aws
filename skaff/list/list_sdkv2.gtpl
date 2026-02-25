@@ -192,6 +192,10 @@ func list{{ .ListResource }}s(ctx context.Context, conn *{{ .SDKPackage }}.Clien
 // It is intended to perform the flattening of the results of the API call or calls used to populate a resource's values.
 // It should replace most of the body of the resource type's Read function (`resource{{ .ListResource }}Read`) and take the API results
 // as parameters.
+// The replaced section of the Read function should be
+// 	if err := resource{{ .ListResource }}Flatten(ctx, meta.(*conns.AWSClient), lb, d); err != nil {
+// 		return sdkdiag.AppendFromErr(diags, err)
+// 	}
 {{- end }}
 func resource{{ .ListResource }}Flatten(ctx context.Context, awsClient *conns.AWSClient, lb *awstypes.{{ .ListResource }}, d *schema.ResourceData) error {
 	d.Set(names.AttrARN, awsClient.RegionalARN(ctx, "{{ .ARNNamespace }}", "{{ .ListResourceLower }}/"+d.Id()))
