@@ -501,11 +501,11 @@ func statusConnectionState(conn *eventbridge.Client, name string) retry.StateRef
 
 func waitConnectionCreated(ctx context.Context, conn *eventbridge.Client, name string) (*eventbridge.DescribeConnectionOutput, error) {
 	const (
-		timeout = 10 * time.Minute
+		timeout = 20 * time.Minute
 	)
 	stateConf := &retry.StateChangeConf{
 		Pending: enum.Slice(types.ConnectionStateCreating, types.ConnectionStateAuthorizing),
-		Target:  enum.Slice(types.ConnectionStateAuthorized, types.ConnectionStateActive),
+		Target:  enum.Slice(types.ConnectionStateAuthorized, types.ConnectionStateDeauthorized, types.ConnectionStateActive),
 		Refresh: statusConnectionState(conn, name),
 		Timeout: timeout,
 	}
