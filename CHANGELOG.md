@@ -23,6 +23,8 @@ ENHANCEMENTS:
 * resource/aws_eip_domain_name: Add import support ([#46582](https://github.com/hashicorp/terraform-provider-aws/issues/46582))
 * resource/aws_grafana_workspace: Add `kms_key_id` argument ([#46584](https://github.com/hashicorp/terraform-provider-aws/issues/46584))
 * resource/aws_instance: Allow `cpu_options.core_count`, `cpu_options.nested_virtualization`, and `cpu_options.threads_per_core` to be updated in-place ([#46568](https://github.com/hashicorp/terraform-provider-aws/issues/46568))
+* resource/aws_lb_target_group_attachment: Add import support ([#46646](https://github.com/hashicorp/terraform-provider-aws/issues/46646))
+* resource/aws_lb_target_group_attachment: Add resource identity ([#46646](https://github.com/hashicorp/terraform-provider-aws/issues/46646))
 * resource/aws_memorydb_cluster: Add `network_type` and `ip_discovery` arguments ([#46636](https://github.com/hashicorp/terraform-provider-aws/issues/46636))
 * resource/aws_opensearch_domain: Add `jwt_options` attribute ([#46439](https://github.com/hashicorp/terraform-provider-aws/issues/46439))
 * resource/aws_wafv2_web_acl_rule_group_association: Add support for `managed_rule_group_configs` within `managed_rule_group` and root-level `visibility_config` block for CloudWatch metrics configuration ([#44426](https://github.com/hashicorp/terraform-provider-aws/issues/44426))
