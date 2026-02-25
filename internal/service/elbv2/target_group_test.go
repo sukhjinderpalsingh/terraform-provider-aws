@@ -3916,11 +3916,14 @@ func TestAccELBV2TargetGroup_Instance_protocolVersion_MigrateV0(t *testing.T) {
 	}
 
 	for _, protocol := range enum.EnumValues[awstypes.ProtocolEnum]() { //nolint:paralleltest // false positive
-		if protocol == awstypes.ProtocolEnumGeneve {
-			continue
-		}
-
 		t.Run(string(protocol), func(t *testing.T) {
+			switch protocol {
+			case awstypes.ProtocolEnumGeneve,
+				awstypes.ProtocolEnumQuic,
+				awstypes.ProtocolEnumTcpQuic:
+				t.Skipf("Protocol %q not supported in v5.25.0", protocol)
+			}
+
 			protocolCase, ok := testcases[protocol]
 			if !ok {
 				t.Fatalf("missing case for target protocol %q", protocol)
@@ -4101,9 +4104,7 @@ func TestAccELBV2TargetGroup_Lambda_protocol(t *testing.T) {
 	t.Parallel()
 
 	for _, protocol := range enum.EnumValues[awstypes.ProtocolEnum]() { //nolint:paralleltest // false positive
-		protocol := string(protocol)
-
-		t.Run(protocol, func(t *testing.T) {
+		t.Run(string(protocol), func(t *testing.T) {
 			ctx := acctest.Context(t)
 			var targetGroup awstypes.TargetGroup
 
@@ -4133,9 +4134,13 @@ func TestAccELBV2TargetGroup_Lambda_protocol_MigrateV0(t *testing.T) {
 	t.Parallel()
 
 	for _, protocol := range enum.EnumValues[awstypes.ProtocolEnum]() { //nolint:paralleltest // false positive
-		protocol := string(protocol)
+		t.Run(string(protocol), func(t *testing.T) {
+			switch protocol {
+			case awstypes.ProtocolEnumQuic,
+				awstypes.ProtocolEnumTcpQuic:
+				t.Skipf("Protocol %q not supported in v5.25.0", protocol)
+			}
 
-		t.Run(protocol, func(t *testing.T) {
 			ctx := acctest.Context(t)
 			var targetGroup awstypes.TargetGroup
 
@@ -4150,7 +4155,7 @@ func TestAccELBV2TargetGroup_Lambda_protocol_MigrateV0(t *testing.T) {
 					PreCheck: resource.ComposeAggregateTestCheckFunc(
 						testAccCheckTargetGroupExists(ctx, t, resourceName, &targetGroup),
 						resource.TestCheckResourceAttr(resourceName, "target_type", string(awstypes.TargetTypeEnumLambda)),
-						resource.TestCheckResourceAttr(resourceName, names.AttrProtocol, protocol),
+						resource.TestCheckResourceAttr(resourceName, names.AttrProtocol, string(protocol)),
 					),
 					PostCheck: resource.ComposeAggregateTestCheckFunc(
 						testAccCheckTargetGroupExists(ctx, t, resourceName, &targetGroup),
@@ -6547,7 +6552,7 @@ resource "aws_vpc" "test" {
 `
 }
 
-func testAccTargetGroupConfig_Lambda_protocol(protocol string) string {
+func testAccTargetGroupConfig_Lambda_protocol(protocol awstypes.ProtocolEnum) string {
 	return fmt.Sprintf(`
 resource "aws_lb_target_group" "test" {
   target_type = "lambda"
