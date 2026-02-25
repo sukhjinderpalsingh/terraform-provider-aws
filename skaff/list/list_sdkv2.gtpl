@@ -194,7 +194,7 @@ func list{{ .ListResource }}s(ctx context.Context, conn *{{ .SDKPackage }}.Clien
 // as parameters.
 {{- end }}
 func resource{{ .ListResource }}Flatten(ctx context.Context, awsClient *conns.AWSClient, lb *awstypes.{{ .ListResource }}, d *schema.ResourceData) error {
-	d.Set(names.AttrARN, awsClient.RegionalARN(ctx, "{{ .SDKPackage }}", "{{ .ListResourceLower }}/"+d.Id()))
+	d.Set(names.AttrARN, awsClient.RegionalARN(ctx, "{{ .ARNNamespace }}", "{{ .ListResourceLower }}/"+d.Id()))
 	if err := d.Set("some_collection", flattenSomeCollection(someCollection)); err != nil {
 		return fmt.Errorf("setting some_collection: %w", err)
 	}
