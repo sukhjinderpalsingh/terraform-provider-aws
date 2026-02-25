@@ -131,6 +131,41 @@ resource "aws_cloudwatch_event_connection" "test" {
 }
 ```
 
+## Example Usage OAuth Authorization with Connectivity Parameters
+
+```terraform
+resource "aws_cloudwatch_event_connection" "test" {
+  name               = "private-api-connection"
+  description        = "A connection to a private API"
+  authorization_type = "OAUTH_CLIENT_CREDENTIALS"
+
+  auth_parameters {
+    connectivity_parameters {
+      resource_parameters {
+        resource_configuration_arn = "arn:aws:vpc-lattice:us-east-1:12345678910:resourceconfiguration/rcfg-12345678910"
+      }
+    }
+
+    oauth {
+      authorization_endpoint = "https://private-api.example.com/auth"
+      http_method            = "POST"
+
+      client_parameters {
+        client_id     = "1234567890"
+        client_secret = "Pass1234!"
+      }
+
+      oauth_http_parameters {
+        body {
+          key             = "grant_type"
+          value           = "client_credentials"
+          is_value_secret = false
+        }
+      }
+    }
+  }
+}
+
 ## Example Usage CMK Encryption
 
 ```terraform
