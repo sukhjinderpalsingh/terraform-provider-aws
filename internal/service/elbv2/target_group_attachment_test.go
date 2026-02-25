@@ -236,6 +236,7 @@ func TestAccELBV2TargetGroupAttachment_Identity_noPort(t *testing.T) {
 						"target_id":                knownvalue.NotNull(),
 						names.AttrPort:             knownvalue.Null(),
 						names.AttrAvailabilityZone: knownvalue.Null(),
+						"quic_server_id":           knownvalue.Null(),
 					}),
 					statecheck.ExpectIdentityValueMatchesState(resourceName, tfjsonpath.New("target_group_arn")),
 					statecheck.ExpectIdentityValueMatchesState(resourceName, tfjsonpath.New("target_id")),

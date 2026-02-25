@@ -17,33 +17,13 @@ resource "aws_instance" "test" {
 {{- template "region" }}
   ami           = data.aws_ami.amzn2_ami_minimal_hvm_ebs_x86_64.id
   instance_type = "t3.micro"
-  subnet_id     = aws_subnet.test.id
-
-{{- template "tags" . }}
+  subnet_id     = aws_subnet.test[0].id
 }
 
-resource "aws_vpc" "test" {
-{{- template "region" }}
-  cidr_block = "10.0.0.0/16"
-}
-
-resource "aws_subnet" "test" {
-{{- template "region" }}
-  vpc_id            = aws_vpc.test.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = data.aws_availability_zones.available.names[0]
-}
-
-data "aws_availability_zones" "available" {
-  state = "available"
-
-  filter {
-    name   = "opt-in-status"
-    values = ["opt-in-not-required"]
-  }
-}
+{{ template "acctest.ConfigVPCWithSubnets" 1 }}
 
 data "aws_ami" "amzn2_ami_minimal_hvm_ebs_x86_64" {
+{{- template "region" }}  
   most_recent = true
   owners      = ["amazon"]
 
