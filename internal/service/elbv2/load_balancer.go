@@ -612,17 +612,17 @@ func resourceLoadBalancerFlatten(ctx context.Context, awsClient *conns.AWSClient
 	d.Set("internal", lb.Scheme == awstypes.LoadBalancerSchemeEnumInternal)
 	d.Set(names.AttrIPAddressType, lb.IpAddressType)
 	if err := d.Set("ipam_pools", flattenIPAMPools(lb.IpamPools)); err != nil {
-		return fmt.Errorf("setting ipam_pools: %s", err)
+		return fmt.Errorf("setting ipam_pools: %w", err)
 	}
 	d.Set("load_balancer_type", lb.Type)
 	d.Set(names.AttrName, lb.LoadBalancerName)
 	d.Set(names.AttrNamePrefix, create.NamePrefixFromName(aws.ToString(lb.LoadBalancerName)))
 	d.Set(names.AttrSecurityGroups, lb.SecurityGroups)
 	if err := d.Set("subnet_mapping", flattenSubnetMappingsFromAvailabilityZones(lb.AvailabilityZones)); err != nil {
-		return fmt.Errorf("setting subnet_mapping: %s", err)
+		return fmt.Errorf("setting subnet_mapping: %w", err)
 	}
 	if err := d.Set(names.AttrSubnets, flattenSubnetsFromAvailabilityZones(lb.AvailabilityZones)); err != nil {
-		return fmt.Errorf("setting subnets: %s", err)
+		return fmt.Errorf("setting subnets: %w", err)
 	}
 	d.Set(names.AttrVPCID, lb.VpcId)
 	d.Set("zone_id", lb.CanonicalHostedZoneId)
@@ -630,19 +630,19 @@ func resourceLoadBalancerFlatten(ctx context.Context, awsClient *conns.AWSClient
 	attributes, err := findLoadBalancerAttributesByARN(ctx, awsClient.ELBV2Client(ctx), d.Id())
 
 	if err != nil {
-		return fmt.Errorf("reading ELBv2 Load Balancer (%s) attributes: %s", d.Id(), err)
+		return fmt.Errorf("reading ELBv2 Load Balancer (%s) attributes: %w", d.Id(), err)
 	}
 
 	if err := d.Set("access_logs", []any{flattenLoadBalancerAccessLogsAttributes(attributes)}); err != nil {
-		return fmt.Errorf("setting access_logs: %s", err)
+		return fmt.Errorf("setting access_logs: %w", err)
 	}
 
 	if lb.Type == awstypes.LoadBalancerTypeEnumApplication {
 		if err := d.Set("connection_logs", []any{flattenLoadBalancerConnectionLogsAttributes(attributes)}); err != nil {
-			return fmt.Errorf("setting connection_logs: %s", err)
+			return fmt.Errorf("setting connection_logs: %w", err)
 		}
 		if err := d.Set("health_check_logs", []any{flattenLoadBalancerHealthCheckLogsAttributes(attributes)}); err != nil {
-			return fmt.Errorf("setting health_check_logs: %s", err)
+			return fmt.Errorf("setting health_check_logs: %w", err)
 		}
 	}
 
@@ -655,10 +655,10 @@ func resourceLoadBalancerFlatten(ctx context.Context, awsClient *conns.AWSClient
 		case tfawserr.ErrCodeEquals(err, errCodeAccessDenied, errCodeInvalidAction):
 			d.Set("minimum_load_balancer_capacity", nil)
 		case err != nil:
-			return fmt.Errorf("reading ELBv2 Load Balancer (%s) capacity reservation: %s", d.Id(), err)
+			return fmt.Errorf("reading ELBv2 Load Balancer (%s) capacity reservation: %w", d.Id(), err)
 		default:
 			if err := d.Set("minimum_load_balancer_capacity", flattenMinimumLoadBalancerCapacity(capacity.MinimumLoadBalancerCapacity)); err != nil {
-				return fmt.Errorf("setting minimum_load_balancer_capacity: %s", err)
+				return fmt.Errorf("setting minimum_load_balancer_capacity: %w", err)
 			}
 		}
 	}
