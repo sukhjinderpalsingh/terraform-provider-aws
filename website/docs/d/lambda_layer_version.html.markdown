@@ -132,12 +132,14 @@ data "aws_lambda_layer_version" "latest_shared" {
 
 ## Argument Reference
 
-One of the following argument combinations is required:
+This data source supports the following arguments:
+
+One of the following is required:
 
 * `layer_name` - (Required) Name of the Lambda layer.
 * `layer_version_arn` - (Required) ARN of the Lambda layer version. Can be a full ARN with version (e.g., `arn:aws:lambda:region:account:layer:name:1`) or without version (e.g., `arn:aws:lambda:region:account:layer:name`). When the version is omitted, the latest version will be retrieved (requires `lambda:ListLayerVersions` permission). Use the full ARN with version for cross-account layers where you don't have list permissions.
 
-The following arguments are optional when using `layer_name`:
+The following are optional when using `layer_name`:
 
 * `compatible_architecture` - (Optional) Specific architecture the layer version must support. Conflicts with `version` and `layer_version_arn`. If specified, the latest available layer version supporting the provided architecture will be used.
 * `compatible_runtime` - (Optional) Specific runtime the layer version must support. Conflicts with `version` and `layer_version_arn`. If specified, the latest available layer version supporting the provided runtime will be used.
