@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/YakDriver/regexache"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-provider-aws/internal/acctest"
 	"github.com/hashicorp/terraform-provider-aws/names"
@@ -132,6 +133,70 @@ func TestAccLambdaLayerVersionDataSource_architectures(t *testing.T) {
 	})
 }
 
+func TestAccLambdaLayerVersionDataSource_arn(t *testing.T) {
+	ctx := acctest.Context(t)
+	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
+	dataSourceName := "data.aws_lambda_layer_version.test"
+	resourceName := "aws_lambda_layer_version.test"
+
+	acctest.ParallelTest(ctx, t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
+		ErrorCheck:               acctest.ErrorCheck(t, names.LambdaServiceID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccLayerVersionDataSourceConfig_arn(rName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(dataSourceName, "layer_name", resourceName, "layer_name"),
+					resource.TestCheckResourceAttrPair(dataSourceName, names.AttrVersion, resourceName, names.AttrVersion),
+					resource.TestCheckResourceAttrPair(dataSourceName, names.AttrARN, resourceName, names.AttrARN),
+					resource.TestCheckResourceAttrPair(dataSourceName, "layer_arn", resourceName, "layer_arn"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccLambdaLayerVersionDataSource_arnWithoutVersion(t *testing.T) {
+	ctx := acctest.Context(t)
+	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
+	dataSourceName := "data.aws_lambda_layer_version.test"
+	resourceName := "aws_lambda_layer_version.test"
+
+	acctest.ParallelTest(ctx, t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
+		ErrorCheck:               acctest.ErrorCheck(t, names.LambdaServiceID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccLayerVersionDataSourceConfig_arnWithoutVersion(rName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(dataSourceName, "layer_name", resourceName, "layer_name"),
+					resource.TestCheckResourceAttrPair(dataSourceName, names.AttrVersion, resourceName, names.AttrVersion),
+					resource.TestCheckResourceAttrPair(dataSourceName, names.AttrARN, resourceName, names.AttrARN),
+					resource.TestCheckResourceAttrPair(dataSourceName, "layer_arn", resourceName, "layer_arn"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccLambdaLayerVersionDataSource_arnCrossAccountWithoutVersionError(t *testing.T) {
+	ctx := acctest.Context(t)
+
+	acctest.ParallelTest(ctx, t, resource.TestCase{
+		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
+		ErrorCheck:               acctest.ErrorCheck(t, names.LambdaServiceID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccLayerVersionDataSourceConfig_arnCrossAccountWithoutVersion(),
+				ExpectError: regexache.MustCompile(`unable to list layer versions.*cross-account.*version number`),
+			},
+		},
+	})
+}
+
 func testAccLayerVersionDataSourceConfig_basic(rName string) string {
 	return fmt.Sprintf(`
 resource "aws_lambda_layer_version" "test" {
@@ -249,4 +314,41 @@ data "aws_lambda_layer_version" "test" {
   layer_name = aws_lambda_layer_version.test.layer_name
 }
 `, rName)
+}
+
+func testAccLayerVersionDataSourceConfig_arn(rName string) string {
+	return fmt.Sprintf(`
+resource "aws_lambda_layer_version" "test" {
+  filename            = "test-fixtures/lambdatest.zip"
+  layer_name          = %[1]q
+  compatible_runtimes = ["nodejs20.x"]
+}
+
+data "aws_lambda_layer_version" "test" {
+  layer_version_arn = aws_lambda_layer_version.test.arn
+}
+`, rName)
+}
+
+func testAccLayerVersionDataSourceConfig_arnWithoutVersion(rName string) string {
+	return fmt.Sprintf(`
+resource "aws_lambda_layer_version" "test" {
+  filename            = "test-fixtures/lambdatest.zip"
+  layer_name          = %[1]q
+  compatible_runtimes = ["nodejs20.x"]
+}
+
+data "aws_lambda_layer_version" "test" {
+  layer_version_arn = aws_lambda_layer_version.test.layer_arn
+}
+`, rName)
+}
+
+func testAccLayerVersionDataSourceConfig_arnCrossAccountWithoutVersion() string {
+	return `
+data "aws_lambda_layer_version" "test" {
+  # Datadog's public layer - we don't have ListLayerVersions permission
+  layer_version_arn = "arn:aws:lambda:us-east-1:464622532012:layer:Datadog-Python312"
+}
+`
 }
