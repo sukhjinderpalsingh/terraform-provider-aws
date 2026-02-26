@@ -16,6 +16,8 @@ import (
 )
 
 func TestParseLayerVersionARN(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		arn         string
@@ -49,6 +51,7 @@ func TestParseLayerVersionARN(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			layer, version, err := tflambda.ParseLayerVersionARN(tt.arn)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseLayerVersionARN() error = %v, wantErr %v", err, tt.wantErr)
@@ -67,6 +70,8 @@ func TestParseLayerVersionARN(t *testing.T) {
 }
 
 func TestLayerNameFromARN(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name     string
 		layerArn string
@@ -91,6 +96,7 @@ func TestLayerNameFromARN(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			if got := tflambda.LayerNameFromARN(tt.layerArn); got != tt.want {
 				t.Errorf("layerNameFromARN() = %v, want %v", got, tt.want)
 			}
