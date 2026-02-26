@@ -99,7 +99,7 @@ func sweepClusterSnapshots(ctx context.Context, client *conns.AWSClient) ([]swee
 				continue
 			}
 
-			r := ResourceClusterSnapshot()
+			r := resourceClusterSnapshot()
 			d := r.Data(nil)
 			d.SetId(id)
 
