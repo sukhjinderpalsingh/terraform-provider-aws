@@ -31,7 +31,7 @@ import (
 func RegisterSweepers() {
 	awsv2.Register("aws_rds_cluster_parameter_group", sweepClusterParameterGroups, "aws_rds_cluster", "aws_docdb_cluster", "aws_neptune_cluster")
 	awsv2.Register("aws_db_cluster_snapshot", sweepClusterSnapshots, "aws_rds_cluster")
-	awsv2.Register("aws_rds_cluster", sweepClusters, "aws_db_instance", "aws_rds_shard_group")
+	awsv2.Register("aws_rds_cluster", sweepClusters, "aws_db_instance", "aws_rds_shard_group", "aws_rds_integration")
 	awsv2.Register("aws_db_event_subscription", sweepEventSubscriptions)
 	awsv2.Register("aws_rds_global_cluster", sweepGlobalClusters)
 	awsv2.Register("aws_db_instance", sweepInstances, "aws_rds_global_cluster")
@@ -43,6 +43,7 @@ func RegisterSweepers() {
 	awsv2.Register("aws_db_instance_automated_backups_replication", sweepInstanceAutomatedBackups, "aws_db_instance")
 	awsv2.Register("aws_rds_shard_group", sweepShardGroups)
 	awsv2.Register("aws_rds_blue_green_deployment", sweepBlueGreenDeployments, "aws_db_instance") // Pseudo resource.
+	awsv2.Register("aws_rds_integration", sweepIntegrations)
 }
 
 func sweepClusterParameterGroups(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweepable, error) {
@@ -552,4 +553,26 @@ func (s blueGreenDeploymentSweeper) Delete(ctx context.Context, optFns ...tfreso
 	}
 
 	return nil
+}
+
+func sweepIntegrations(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweepable, error) {
+	conn := client.RDSClient(ctx)
+	var input rds.DescribeIntegrationsInput
+	sweepResources := make([]sweep.Sweepable, 0)
+
+	pages := rds.NewDescribeIntegrationsPaginator(conn, &input)
+	for pages.HasMorePages() {
+		page, err := pages.NextPage(ctx)
+
+		if err != nil {
+			return nil, err
+		}
+
+		for _, v := range page.Integrations {
+			sweepResources = append(sweepResources, framework.NewSweepResource(newIntegrationResource, client,
+				framework.NewAttribute(names.AttrID, aws.ToString(v.IntegrationArn))))
+		}
+	}
+
+	return sweepResources, nil
 }
