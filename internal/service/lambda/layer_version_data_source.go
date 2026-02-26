@@ -84,6 +84,7 @@ func dataSourceLayerVersion() *schema.Resource {
 			"layer_version_arn": {
 				Type:          schema.TypeString,
 				Optional:      true,
+				Computed:      true,
 				ConflictsWith: []string{"layer_name", names.AttrVersion, "compatible_architecture", "compatible_runtime"},
 			},
 			"license_info": {
@@ -121,73 +122,51 @@ func dataSourceLayerVersionRead(ctx context.Context, d *schema.ResourceData, met
 	var diags diag.Diagnostics
 	conn := meta.(*conns.AWSClient).LambdaClient(ctx)
 
-	var layerName string
-	var versionNumber int64
+	var output *lambda.GetLayerVersionOutput
+	var err error
 
 	if v, ok := d.GetOk("layer_version_arn"); ok {
-		arn := v.(string)
-		output, err := findLayerVersionByARN(ctx, conn, arn)
+		output, err = findLayerVersionByARN(ctx, conn, v.(string))
 		if err != nil {
-			return sdkdiag.AppendErrorf(diags, "reading Lambda Layer Version (%s): %s", arn, err)
+			return sdkdiag.AppendErrorf(diags, "reading Lambda Layer Version (%s): %s", v.(string), err)
 		}
-
-		d.SetId(aws.ToString(output.LayerVersionArn))
-		d.Set(names.AttrARN, output.LayerVersionArn)
-		d.Set("code_sha256", output.Content.CodeSha256)
-		d.Set("compatible_architectures", output.CompatibleArchitectures)
-		d.Set("compatible_runtimes", output.CompatibleRuntimes)
-		d.Set(names.AttrCreatedDate, output.CreatedDate)
-		d.Set(names.AttrDescription, output.Description)
-		d.Set("layer_arn", output.LayerArn)
-		d.Set("layer_name", layerNameFromARN(aws.ToString(output.LayerArn)))
-		d.Set("layer_version_arn", arn)
-		d.Set("license_info", output.LicenseInfo)
-		d.Set("signing_job_arn", output.Content.SigningJobArn)
-		d.Set("signing_profile_version_arn", output.Content.SigningProfileVersionArn)
-		d.Set("source_code_hash", output.Content.CodeSha256)
-		d.Set("source_code_size", output.Content.CodeSize)
-		d.Set(names.AttrVersion, output.Version)
-
-		return diags
-	}
-
-	layerName = d.Get("layer_name").(string)
-	if layerName == "" {
-		return sdkdiag.AppendErrorf(diags, "one of `layer_name` or `layer_version_arn` must be specified")
-	}
-
-	if v, ok := d.GetOk(names.AttrVersion); ok {
-		versionNumber = int64(v.(int))
 	} else {
-		input := &lambda.ListLayerVersionsInput{
-			LayerName: aws.String(layerName),
+		layerName := d.Get("layer_name").(string)
+		if layerName == "" {
+			return sdkdiag.AppendErrorf(diags, "one of `layer_name` or `layer_version_arn` must be specified")
 		}
 
-		if v, ok := d.GetOk("compatible_architecture"); ok {
-			input.CompatibleArchitecture = awstypes.Architecture(v.(string))
+		var versionNumber int64
+		if v, ok := d.GetOk(names.AttrVersion); ok {
+			versionNumber = int64(v.(int))
+		} else {
+			input := &lambda.ListLayerVersionsInput{
+				LayerName: aws.String(layerName),
+			}
+
+			if v, ok := d.GetOk("compatible_architecture"); ok {
+				input.CompatibleArchitecture = awstypes.Architecture(v.(string))
+			}
+
+			if v, ok := d.GetOk("compatible_runtime"); ok {
+				input.CompatibleRuntime = awstypes.Runtime(v.(string))
+			}
+
+			listOutput, err := conn.ListLayerVersions(ctx, input)
+			if err == nil && len(listOutput.LayerVersions) == 0 {
+				err = tfresource.NewEmptyResultError()
+			}
+			if err != nil {
+				return sdkdiag.AppendErrorf(diags, "listing Lambda Layer Versions (%s): %s", layerName, err)
+			}
+
+			versionNumber = listOutput.LayerVersions[0].Version
 		}
 
-		if v, ok := d.GetOk("compatible_runtime"); ok {
-			input.CompatibleRuntime = awstypes.Runtime(v.(string))
-		}
-
-		output, err := conn.ListLayerVersions(ctx, input)
-
-		if err == nil && len(output.LayerVersions) == 0 {
-			err = tfresource.NewEmptyResultError()
-		}
-
+		output, err = findLayerVersionByTwoPartKey(ctx, conn, layerName, versionNumber)
 		if err != nil {
-			return sdkdiag.AppendErrorf(diags, "listing Lambda Layer Versions (%s): %s", layerName, err)
+			return sdkdiag.AppendErrorf(diags, "reading Lambda Layer (%s) Version (%d): %s", layerName, versionNumber, err)
 		}
-
-		versionNumber = output.LayerVersions[0].Version
-	}
-
-	output, err := findLayerVersionByTwoPartKey(ctx, conn, layerName, versionNumber)
-
-	if err != nil {
-		return sdkdiag.AppendErrorf(diags, "reading Lambda Layer (%s) Version (%d): %s", layerName, versionNumber, err)
 	}
 
 	d.SetId(aws.ToString(output.LayerVersionArn))
@@ -198,6 +177,8 @@ func dataSourceLayerVersionRead(ctx context.Context, d *schema.ResourceData, met
 	d.Set(names.AttrCreatedDate, output.CreatedDate)
 	d.Set(names.AttrDescription, output.Description)
 	d.Set("layer_arn", output.LayerArn)
+	d.Set("layer_name", layerNameFromARN(aws.ToString(output.LayerArn)))
+	d.Set("layer_version_arn", output.LayerVersionArn)
 	d.Set("license_info", output.LicenseInfo)
 	d.Set("signing_job_arn", output.Content.SigningJobArn)
 	d.Set("signing_profile_version_arn", output.Content.SigningProfileVersionArn)
