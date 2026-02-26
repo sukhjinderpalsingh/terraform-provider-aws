@@ -67,14 +67,6 @@ func RegisterSweepers() {
 			"aws_neptune_cluster_instance",
 		},
 	})
-
-	resource.AddTestSweepers("aws_neptune_subnet_group", &resource.Sweeper{
-		Name: "aws_neptune_subnet_group",
-		F:    sweepSubnetGroups,
-		Dependencies: []string{
-			"aws_neptune_cluster",
-		},
-	})
 }
 
 func sweepEventSubscriptions(region string) error {
@@ -404,47 +396,6 @@ func sweepParameterGroups(region string) error {
 
 	if err != nil {
 		return fmt.Errorf("error sweeping Neptune Parameter Groups (%s): %w", region, err)
-	}
-
-	return nil
-}
-
-func sweepSubnetGroups(region string) error {
-	ctx := sweep.Context(region)
-	client, err := sweep.SharedRegionalSweepClient(ctx, region)
-	if err != nil {
-		return fmt.Errorf("getting client: %w", err)
-	}
-	conn := client.NeptuneClient(ctx)
-	input := &neptune.DescribeDBSubnetGroupsInput{}
-	sweepResources := make([]sweep.Sweepable, 0)
-
-	pages := neptune.NewDescribeDBSubnetGroupsPaginator(conn, input)
-	for pages.HasMorePages() {
-		page, err := pages.NextPage(ctx)
-
-		if awsv2.SkipSweepError(err) {
-			log.Printf("[WARN] Skipping Neptune Subnet Group sweep for %s: %s", region, err)
-			return nil
-		}
-
-		if err != nil {
-			return fmt.Errorf("error listing Neptune Subnet Groups (%s): %w", region, err)
-		}
-
-		for _, v := range page.DBSubnetGroups {
-			r := resourceSubnetGroup()
-			d := r.Data(nil)
-			d.SetId(aws.ToString(v.DBSubnetGroupName))
-
-			sweepResources = append(sweepResources, sweep.NewSweepResource(r, d, client))
-		}
-	}
-
-	err = sweep.SweepOrchestrator(ctx, sweepResources)
-
-	if err != nil {
-		return fmt.Errorf("error sweeping Neptune Subnet Groups (%s): %w", region, err)
 	}
 
 	return nil

@@ -24,7 +24,6 @@ func RegisterSweepers() {
 	awsv2.Register("aws_docdb_cluster_snapshot", sweepClusterSnapshots, "aws_docdb_cluster")
 	awsv2.Register("aws_docdb_event_subscription", sweepEventSubscriptions)
 	awsv2.Register("aws_docdb_global_cluster", sweepClusterSnapshots, "aws_docdb_cluster")
-	awsv2.Register("aws_docdb_subnet_group", sweepSubnetGroups, "aws_docdb_cluster")
 }
 
 func sweepClusters(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweepable, error) {
@@ -183,31 +182,6 @@ func sweepGlobalClusters(ctx context.Context, client *conns.AWSClient) ([]sweep.
 			r := resourceGlobalCluster()
 			d := r.Data(nil)
 			d.SetId(aws.ToString(v.GlobalClusterIdentifier))
-
-			sweepResources = append(sweepResources, sweep.NewSweepResource(r, d, client))
-		}
-	}
-
-	return sweepResources, nil
-}
-
-func sweepSubnetGroups(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweepable, error) {
-	conn := client.DocDBClient(ctx)
-	var input docdb.DescribeDBSubnetGroupsInput
-	sweepResources := make([]sweep.Sweepable, 0)
-
-	pages := docdb.NewDescribeDBSubnetGroupsPaginator(conn, &input)
-	for pages.HasMorePages() {
-		page, err := pages.NextPage(ctx)
-
-		if err != nil {
-			return nil, err
-		}
-
-		for _, v := range page.DBSubnetGroups {
-			r := resourceSubnetGroup()
-			d := r.Data(nil)
-			d.SetId(aws.ToString(v.DBSubnetGroupName))
 
 			sweepResources = append(sweepResources, sweep.NewSweepResource(r, d, client))
 		}

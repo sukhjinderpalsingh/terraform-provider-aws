@@ -37,7 +37,7 @@ func RegisterSweepers() {
 	awsv2.Register("aws_db_parameter_group", sweepParameterGroups, "aws_db_instance")
 	awsv2.Register("aws_db_proxy", sweepProxies)
 	awsv2.Register("aws_db_snapshot", sweepSnapshots, "aws_db_instance")
-	awsv2.Register("aws_db_subnet_group", sweepSubnetGroups, "aws_rds_cluster")
+	awsv2.Register("aws_db_subnet_group", sweepSubnetGroups, "aws_rds_cluster", "aws_docdb_cluster", "aws_neptune_cluster")
 	awsv2.Register("aws_db_instance_automated_backups_replication", sweepInstanceAutomatedBackups, "aws_db_instance")
 	awsv2.Register("aws_rds_shard_group", sweepShardGroups)
 	awsv2.Register("aws_rds_blue_green_deployment", sweepBlueGreenDeployments, "aws_db_instance") // Pseudo resource.
