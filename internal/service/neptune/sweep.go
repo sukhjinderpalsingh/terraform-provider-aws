@@ -4,12 +4,12 @@
 package neptune
 
 import (
-	"fmt"
+	"context"
 	"log"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/neptune"
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-provider-aws/internal/conns"
 	"github.com/hashicorp/terraform-provider-aws/internal/retry"
 	"github.com/hashicorp/terraform-provider-aws/internal/sweep"
 	"github.com/hashicorp/terraform-provider-aws/internal/sweep/awsv2"
@@ -17,60 +17,30 @@ import (
 )
 
 func RegisterSweepers() {
-	resource.AddTestSweepers("aws_neptune_cluster", &resource.Sweeper{
-		Name: "aws_neptune_cluster",
-		F:    sweepClusters,
-		Dependencies: []string{
-			"aws_neptune_cluster_instance",
-		},
-	})
-
-	resource.AddTestSweepers("aws_neptune_cluster_instance", &resource.Sweeper{
-		Name: "aws_neptune_cluster_instance",
-		F:    sweepClusterInstances,
-	})
-
-	resource.AddTestSweepers("aws_neptune_cluster_snapshot", &resource.Sweeper{
-		Name: "aws_neptune_cluster_snapshot",
-		F:    sweepClusterSnapshots,
-		Dependencies: []string{
-			"aws_neptune_cluster",
-		},
-	})
-
-	resource.AddTestSweepers("aws_neptune_global_cluster", &resource.Sweeper{
-		Name: "aws_neptune_global_cluster",
-		F:    sweepGlobalClusters,
-		Dependencies: []string{
-			"aws_neptune_cluster",
-		},
-	})
+	awsv2.Register("aws_neptune_cluster", sweepClusters, "aws_neptune_cluster_instance")
+	awsv2.Register("aws_neptune_cluster_instance", sweepClusterInstances)
+	awsv2.Register("aws_neptune_cluster_snapshot", sweepClusterSnapshots, "aws_neptune_cluster")
+	awsv2.Register("aws_neptune_global_cluster", sweepGlobalClusters, "aws_neptune_cluster")
 }
 
-func sweepClusters(region string) error {
-	ctx := sweep.Context(region)
-	client, err := sweep.SharedRegionalSweepClient(ctx, region)
-	if err != nil {
-		return fmt.Errorf("getting client: %w", err)
-	}
+func sweepClusters(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweepable, error) {
 	conn := client.NeptuneClient(ctx)
-	input := &neptune.DescribeDBClustersInput{}
+	var input neptune.DescribeDBClustersInput
 	sweepResources := make([]sweep.Sweepable, 0)
 
-	pages := neptune.NewDescribeDBClustersPaginator(conn, input)
+	pages := neptune.NewDescribeDBClustersPaginator(conn, &input)
 	for pages.HasMorePages() {
 		page, err := pages.NextPage(ctx)
 
-		if awsv2.SkipSweepError(err) {
-			log.Printf("[WARN] Skipping Neptune Cluster sweep for %s: %s", region, err)
-			return nil
-		}
-
 		if err != nil {
-			return fmt.Errorf("listing Neptune Clusters (%s): %w", region, err)
+			return nil, err
 		}
 
 		for _, v := range page.DBClusters {
+			if engine := aws.ToString(v.Engine); engine != defaultEngine {
+				continue
+			}
+
 			arn := aws.ToString(v.DBClusterArn)
 			id := aws.ToString(v.DBClusterIdentifier)
 
@@ -97,39 +67,27 @@ func sweepClusters(region string) error {
 		}
 	}
 
-	err = sweep.SweepOrchestrator(ctx, sweepResources)
-
-	if err != nil {
-		return fmt.Errorf("sweeping Neptune Clusters (%s): %w", region, err)
-	}
-
-	return nil
+	return sweepResources, nil
 }
 
-func sweepClusterSnapshots(region string) error {
-	ctx := sweep.Context(region)
-	client, err := sweep.SharedRegionalSweepClient(ctx, region)
-	if err != nil {
-		return fmt.Errorf("getting client: %w", err)
-	}
+func sweepClusterSnapshots(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweepable, error) {
 	conn := client.NeptuneClient(ctx)
-	input := &neptune.DescribeDBClusterSnapshotsInput{}
+	var input neptune.DescribeDBClusterSnapshotsInput
 	sweepResources := make([]sweep.Sweepable, 0)
 
-	pages := neptune.NewDescribeDBClusterSnapshotsPaginator(conn, input)
+	pages := neptune.NewDescribeDBClusterSnapshotsPaginator(conn, &input)
 	for pages.HasMorePages() {
 		page, err := pages.NextPage(ctx)
 
-		if awsv2.SkipSweepError(err) {
-			log.Printf("[WARN] Skipping Neptune Cluster Snapshot sweep for %s: %s", region, err)
-			return nil
-		}
-
 		if err != nil {
-			return fmt.Errorf("listing Neptune Cluster Snapshots (%s): %w", region, err)
+			return nil, err
 		}
 
 		for _, v := range page.DBClusterSnapshots {
+			if engine := aws.ToString(v.Engine); engine != defaultEngine {
+				continue
+			}
+
 			r := resourceClusterSnapshot()
 			d := r.Data(nil)
 			d.SetId(aws.ToString(v.DBClusterSnapshotIdentifier))
@@ -138,36 +96,20 @@ func sweepClusterSnapshots(region string) error {
 		}
 	}
 
-	err = sweep.SweepOrchestrator(ctx, sweepResources)
-
-	if err != nil {
-		return fmt.Errorf("sweeping Neptune Cluster Snapshots (%s): %w", region, err)
-	}
-
-	return nil
+	return sweepResources, nil
 }
 
-func sweepClusterInstances(region string) error {
-	ctx := sweep.Context(region)
-	client, err := sweep.SharedRegionalSweepClient(ctx, region)
-	if err != nil {
-		return fmt.Errorf("getting client: %w", err)
-	}
+func sweepClusterInstances(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweepable, error) {
 	conn := client.NeptuneClient(ctx)
-	input := &neptune.DescribeDBInstancesInput{}
+	var input neptune.DescribeDBInstancesInput
 	sweepResources := make([]sweep.Sweepable, 0)
 
-	pages := neptune.NewDescribeDBInstancesPaginator(conn, input)
+	pages := neptune.NewDescribeDBInstancesPaginator(conn, &input)
 	for pages.HasMorePages() {
 		page, err := pages.NextPage(ctx)
 
-		if awsv2.SkipSweepError(err) {
-			log.Printf("[WARN] Skipping Neptune Cluster Instance sweep for %s: %s", region, err)
-			return nil
-		}
-
 		if err != nil {
-			return fmt.Errorf("listing Neptune Cluster Instances (%s): %w", region, err)
+			return nil, err
 		}
 
 		for _, v := range page.DBInstances {
@@ -192,39 +134,27 @@ func sweepClusterInstances(region string) error {
 		}
 	}
 
-	err = sweep.SweepOrchestrator(ctx, sweepResources)
-
-	if err != nil {
-		return fmt.Errorf("sweeping Neptune Cluster Instances (%s): %w", region, err)
-	}
-
-	return nil
+	return sweepResources, nil
 }
 
-func sweepGlobalClusters(region string) error {
-	ctx := sweep.Context(region)
-	client, err := sweep.SharedRegionalSweepClient(ctx, region)
-	if err != nil {
-		return fmt.Errorf("getting client: %w", err)
-	}
+func sweepGlobalClusters(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweepable, error) {
 	conn := client.NeptuneClient(ctx)
-	input := &neptune.DescribeGlobalClustersInput{}
+	var input neptune.DescribeGlobalClustersInput
 	sweepResources := make([]sweep.Sweepable, 0)
 
-	pages := neptune.NewDescribeGlobalClustersPaginator(conn, input)
+	pages := neptune.NewDescribeGlobalClustersPaginator(conn, &input)
 	for pages.HasMorePages() {
 		page, err := pages.NextPage(ctx)
 
-		if awsv2.SkipSweepError(err) {
-			log.Printf("[WARN] Skipping Neptune Global Cluster sweep for %s: %s", region, err)
-			return nil
-		}
-
 		if err != nil {
-			return fmt.Errorf("listing Neptune Global Clusters (%s): %w", region, err)
+			return nil, err
 		}
 
 		for _, v := range page.GlobalClusters {
+			if engine := aws.ToString(v.Engine); engine != defaultEngine {
+				continue
+			}
+
 			r := resourceGlobalCluster()
 			d := r.Data(nil)
 			d.SetId(aws.ToString(v.GlobalClusterIdentifier))
@@ -233,11 +163,5 @@ func sweepGlobalClusters(region string) error {
 		}
 	}
 
-	err = sweep.SweepOrchestrator(ctx, sweepResources)
-
-	if err != nil {
-		return fmt.Errorf("sweeping Neptune Global Clusters (%s): %w", region, err)
-	}
-
-	return nil
+	return sweepResources, nil
 }
