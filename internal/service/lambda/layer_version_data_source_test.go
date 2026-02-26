@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/YakDriver/regexache"
+	"github.com/hashicorp/aws-sdk-go-base/v2/endpoints"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-provider-aws/internal/acctest"
 	"github.com/hashicorp/terraform-provider-aws/names"
@@ -185,7 +186,10 @@ func TestAccLambdaLayerVersionDataSource_arnCrossAccountWithoutVersionError(t *t
 	ctx := acctest.Context(t)
 
 	acctest.ParallelTest(ctx, t, resource.TestCase{
-		PreCheck:                 func() { acctest.PreCheck(ctx, t) },
+		PreCheck: func() {
+			acctest.PreCheck(ctx, t)
+			acctest.PreCheckPartition(t, endpoints.AwsPartitionID)
+		},
 		ErrorCheck:               acctest.ErrorCheck(t, names.LambdaServiceID),
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
 		Steps: []resource.TestStep{
@@ -345,6 +349,7 @@ data "aws_lambda_layer_version" "test" {
 }
 
 func testAccLayerVersionDataSourceConfig_arnCrossAccountWithoutVersion() string {
+	// lintignore:AWSAT003,AWSAT005
 	return `
 data "aws_lambda_layer_version" "test" {
   # Datadog's public layer - we don't have ListLayerVersions permission
