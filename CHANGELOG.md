@@ -1,5 +1,9 @@
 ## 6.35.0 (Unreleased)
 
+BUG FIXES:
+
+* resource/aws_elasticache_replication_group: Remove hard-coded upper limit of 5 for `replicas_per_node_group` and `node_group_configuration.replica_count` to support quota increases ([#46670](https://github.com/hashicorp/terraform-provider-aws/issues/46670))
+
 ## 6.34.0 (February 25, 2026)
 
 FEATURES:
