@@ -1,8 +1,13 @@
 ## 6.35.0 (Unreleased)
 
+ENHANCEMENTS:
+
+* data-source/aws_lambda_layer_version: Add `layer_version_arn` argument to support cross-account Lambda layer access ([#46673](https://github.com/hashicorp/terraform-provider-aws/issues/46673))
+
 BUG FIXES:
 
 * resource/aws_elasticache_replication_group: Remove hard-coded upper limit of 5 for `replicas_per_node_group` and `node_group_configuration.replica_count` to support quota increases ([#46670](https://github.com/hashicorp/terraform-provider-aws/issues/46670))
+* resource/aws_networkmanager_attachment_routing_policy_label: Fix attachment state waiter to handle all Cloud WAN attachment lifecycle states ([#46672](https://github.com/hashicorp/terraform-provider-aws/issues/46672))
 
 ## 6.34.0 (February 25, 2026)
 
