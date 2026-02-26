@@ -20,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-provider-aws/internal/enum"
 	"github.com/hashicorp/terraform-provider-aws/internal/errs/sdkdiag"
 	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
+	"github.com/hashicorp/terraform-provider-aws/internal/verify"
 	"github.com/hashicorp/terraform-provider-aws/names"
 )
 
@@ -85,6 +86,7 @@ func dataSourceLayerVersion() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				Computed:      true,
+				ValidateFunc:  verify.ValidARN,
 				ConflictsWith: []string{"layer_name", names.AttrVersion, "compatible_architecture", "compatible_runtime"},
 			},
 			"license_info": {
