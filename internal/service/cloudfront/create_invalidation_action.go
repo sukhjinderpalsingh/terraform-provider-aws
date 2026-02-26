@@ -132,7 +132,7 @@ func (a *createInvalidationAction) Invoke(ctx context.Context, req action.Invoke
 
 	// Send initial progress update
 	cb := fwactions.NewSendProgressFunc(resp)
-	cb("Starting cache invalidation for CloudFront distribution %s...", distributionID)
+	cb(ctx, "Starting cache invalidation for CloudFront distribution %s...", distributionID)
 
 	// Check if distribution exists first
 	_, err := findDistributionByID(ctx, conn, distributionID)
@@ -152,7 +152,7 @@ func (a *createInvalidationAction) Invoke(ctx context.Context, req action.Invoke
 	}
 
 	// Create invalidation request
-	cb("Creating invalidation request for %d path(s)...", len(paths))
+	cb(ctx, "Creating invalidation request for %d path(s)...", len(paths))
 
 	input := cloudfront.CreateInvalidationInput{
 		DistributionId: aws.String(distributionID),
@@ -189,7 +189,7 @@ func (a *createInvalidationAction) Invoke(ctx context.Context, req action.Invoke
 	}
 
 	invalidationID := aws.ToString(output.Invalidation.Id)
-	cb("Invalidation %s created, waiting for completion...", invalidationID)
+	cb(ctx, "Invalidation %s created, waiting for completion...", invalidationID)
 
 	// Wait for invalidation to complete with periodic progress updates using actionwait
 	// Use fixed interval since CloudFront invalidations have predictable timing and
@@ -214,7 +214,7 @@ func (a *createInvalidationAction) Invoke(ctx context.Context, req action.Invoke
 			"InProgress",
 		},
 		ProgressSink: func(fr actionwait.FetchResult[any], meta actionwait.ProgressMeta) {
-			cb("Invalidation %s is currently '%s', continuing to wait for completion...", invalidationID, fr.Status)
+			cb(ctx, "Invalidation %s is currently '%s', continuing to wait for completion...", invalidationID, fr.Status)
 		},
 	})
 	if err != nil {
@@ -240,7 +240,7 @@ func (a *createInvalidationAction) Invoke(ctx context.Context, req action.Invoke
 	}
 
 	// Final success message
-	cb("CloudFront cache invalidation %s completed successfully for distribution %s", invalidationID, distributionID)
+	cb(ctx, "CloudFront cache invalidation %s completed successfully for distribution %s", invalidationID, distributionID)
 
 	tflog.Info(ctx, "CloudFront invalidate cache action completed successfully", map[string]any{
 		"distribution_id": distributionID,

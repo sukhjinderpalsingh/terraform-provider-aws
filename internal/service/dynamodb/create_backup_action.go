@@ -104,7 +104,7 @@ func (a *createBackupAction) Invoke(ctx context.Context, req action.InvokeReques
 	})
 
 	cb := fwactions.NewSendProgressFunc(resp)
-	cb("Starting backup creation for DynamoDB table %s...", tableName)
+	cb(ctx, "Starting backup creation for DynamoDB table %s...", tableName)
 
 	input := dynamodb.CreateBackupInput{
 		TableName:  aws.String(tableName),
@@ -136,7 +136,7 @@ func (a *createBackupAction) Invoke(ctx context.Context, req action.InvokeReques
 
 	backupArn := aws.ToString(output.BackupDetails.BackupArn)
 
-	cb("Backup started, waiting for completion...")
+	cb(ctx, "Backup started, waiting for completion...")
 
 	result, err := actionwait.WaitForStatus(ctx, func(ctx context.Context) (actionwait.FetchResult[*awstypes.BackupDescription], error) {
 		input := &dynamodb.DescribeBackupInput{BackupArn: aws.String(backupArn)}
@@ -154,7 +154,7 @@ func (a *createBackupAction) Invoke(ctx context.Context, req action.InvokeReques
 		TransitionalStates: []actionwait.Status{actionwait.Status(awstypes.BackupStatusCreating)},
 		FailureStates:      []actionwait.Status{actionwait.Status(awstypes.BackupStatusDeleted)},
 		ProgressSink: func(fr actionwait.FetchResult[any], meta actionwait.ProgressMeta) {
-			cb("Backup currently in state: %s", fr.Status)
+			cb(ctx, "Backup currently in state: %s", fr.Status)
 		},
 	})
 	if err != nil {
@@ -182,7 +182,7 @@ func (a *createBackupAction) Invoke(ctx context.Context, req action.InvokeReques
 		backupDetails.BackupCreationDateTime.Format(time.RFC3339),
 		aws.ToInt64(backupDetails.BackupSizeBytes),
 	)
-	cb(backupInfo)
+	cb(ctx, backupInfo)
 
 	tflog.Info(ctx, "DynamoDB create backup action completed successfully", map[string]any{
 		names.AttrTableName: tableName,

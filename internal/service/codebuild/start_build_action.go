@@ -111,7 +111,7 @@ func (a *startBuildAction) Invoke(ctx context.Context, req action.InvokeRequest,
 	})
 
 	cb := fwactions.NewSendProgressFunc(resp)
-	cb("Starting CodeBuild project build...")
+	cb(ctx, "Starting CodeBuild project build...")
 
 	var input codebuild.StartBuildInput
 	resp.Diagnostics.Append(fwflex.Expand(ctx, model, &input)...)
@@ -128,7 +128,7 @@ func (a *startBuildAction) Invoke(ctx context.Context, req action.InvokeRequest,
 	buildID := aws.ToString(output.Build.Id)
 	model.BuildID = types.StringValue(buildID)
 
-	cb("Build started, waiting for completion...")
+	cb(ctx, "Build started, waiting for completion...")
 
 	// Poll for build completion using actionwait with backoff strategy
 	// Use backoff since builds can take a long time and status changes less frequently
@@ -159,7 +159,7 @@ func (a *startBuildAction) Invoke(ctx context.Context, req action.InvokeRequest,
 			actionwait.Status(awstypes.StatusTypeTimedOut),
 		},
 		ProgressSink: func(fr actionwait.FetchResult[any], meta actionwait.ProgressMeta) {
-			cb("Build currently in state: %s", fr.Status)
+			cb(ctx, "Build currently in state: %s", fr.Status)
 		},
 	})
 	if err != nil {
@@ -178,5 +178,5 @@ func (a *startBuildAction) Invoke(ctx context.Context, req action.InvokeRequest,
 		return
 	}
 
-	cb("Build completed successfully")
+	cb(ctx, "Build completed successfully")
 }

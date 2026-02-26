@@ -4,15 +4,16 @@
 package actions
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/action"
 )
 
-type SendProgressFunc func(string, ...any)
+type SendProgressFunc func(context.Context, string, ...any)
 
 func NewSendProgressFunc(response *action.InvokeResponse) SendProgressFunc {
-	return func(format string, a ...any) {
+	return func(_ context.Context, format string, a ...any) {
 		response.SendProgress(action.InvokeProgressEvent{
 			Message: fmt.Sprintf(format, a...),
 		})
