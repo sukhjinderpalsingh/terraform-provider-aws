@@ -21,6 +21,12 @@ func RegisterSweepers() {
 	awsv2.Register("aws_docdb_cluster_instance", sweepClusterInstances)
 	awsv2.Register("aws_docdb_cluster_snapshot", sweepClusterSnapshots, "aws_docdb_cluster")
 	awsv2.Register("aws_docdb_global_cluster", sweepGlobalClusters, "aws_docdb_cluster")
+
+	// No sweepers for
+	// * aws_docdb_cluster_parameter_group
+	// * aws_docdb_event_subscription
+	// * aws_docdb_subnet_group
+	// as they are the same as the RDS resources, and will be swept by RDS.
 }
 
 func sweepClusters(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweepable, error) {
@@ -86,9 +92,16 @@ func sweepClusterSnapshots(ctx context.Context, client *conns.AWSClient) ([]swee
 				continue
 			}
 
+			id := aws.ToString(v.DBClusterSnapshotIdentifier)
+
+			if typ := aws.ToString(v.SnapshotType); typ != "manual" {
+				log.Printf("[INFO] Skipping DocDB Cluster Snapshot %s: SnapshotType=%s", id, typ)
+				continue
+			}
+
 			r := ResourceClusterSnapshot()
 			d := r.Data(nil)
-			d.SetId(aws.ToString(v.DBClusterSnapshotIdentifier))
+			d.SetId(id)
 
 			sweepResources = append(sweepResources, sweep.NewSweepResource(r, d, client))
 		}

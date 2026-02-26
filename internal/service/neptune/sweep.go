@@ -21,6 +21,13 @@ func RegisterSweepers() {
 	awsv2.Register("aws_neptune_cluster_instance", sweepClusterInstances)
 	awsv2.Register("aws_neptune_cluster_snapshot", sweepClusterSnapshots, "aws_neptune_cluster")
 	awsv2.Register("aws_neptune_global_cluster", sweepGlobalClusters, "aws_neptune_cluster")
+
+	// No sweepers for
+	// * aws_neptune_cluster_parameter_group
+	// * aws_neptune_event_subscription
+	// * aws_neptune_parameter_group
+	// * aws_neptune_subnet_group
+	// as they are the same as the RDS resources, and will be swept by RDS.
 }
 
 func sweepClusters(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweepable, error) {
@@ -88,9 +95,16 @@ func sweepClusterSnapshots(ctx context.Context, client *conns.AWSClient) ([]swee
 				continue
 			}
 
+			id := aws.ToString(v.DBClusterSnapshotIdentifier)
+
+			if typ := aws.ToString(v.SnapshotType); typ != "manual" {
+				log.Printf("[INFO] Skipping Neptune Cluster Snapshot %s: SnapshotType=%s", id, typ)
+				continue
+			}
+
 			r := resourceClusterSnapshot()
 			d := r.Data(nil)
-			d.SetId(aws.ToString(v.DBClusterSnapshotIdentifier))
+			d.SetId(id)
 
 			sweepResources = append(sweepResources, sweep.NewSweepResource(r, d, client))
 		}

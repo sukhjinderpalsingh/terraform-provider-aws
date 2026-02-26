@@ -77,13 +77,7 @@ func sweepClusterParameterGroups(ctx context.Context, client *conns.AWSClient) (
 
 func sweepClusterSnapshots(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweepable, error) {
 	conn := client.RDSClient(ctx)
-	input := rds.DescribeDBClusterSnapshotsInput{
-		// "InvalidDBClusterSnapshotStateFault: Only manual snapshots may be deleted."
-		Filters: []types.Filter{{
-			Name:   aws.String("snapshot-type"),
-			Values: []string{"manual"},
-		}},
-	}
+	var input rds.DescribeDBClusterSnapshotsInput
 	sweepResources := make([]sweep.Sweepable, 0)
 
 	pages := rds.NewDescribeDBClusterSnapshotsPaginator(conn, &input)
@@ -95,9 +89,16 @@ func sweepClusterSnapshots(ctx context.Context, client *conns.AWSClient) ([]swee
 		}
 
 		for _, v := range page.DBClusterSnapshots {
+			id := aws.ToString(v.DBClusterSnapshotIdentifier)
+
+			if typ := aws.ToString(v.SnapshotType); typ != "manual" {
+				log.Printf("[INFO] Skipping RDS Cluster Snapshot %s: SnapshotType=%s", id, typ)
+				continue
+			}
+
 			r := resourceClusterSnapshot()
 			d := r.Data(nil)
-			d.SetId(aws.ToString(v.DBClusterSnapshotIdentifier))
+			d.SetId(id)
 
 			sweepResources = append(sweepResources, sweep.NewSweepResource(r, d, client))
 		}
