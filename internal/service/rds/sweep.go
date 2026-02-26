@@ -27,7 +27,7 @@ import (
 )
 
 func RegisterSweepers() {
-	awsv2.Register("aws_rds_cluster_parameter_group", sweepClusterParameterGroups, "aws_rds_cluster")
+	awsv2.Register("aws_rds_cluster_parameter_group", sweepClusterParameterGroups, "aws_rds_cluster", "aws_docdb_cluster", "aws_neptune_cluster")
 	awsv2.Register("aws_db_cluster_snapshot", sweepClusterSnapshots, "aws_rds_cluster")
 	awsv2.Register("aws_rds_cluster", sweepClusters, "aws_db_instance", "aws_rds_shard_group")
 	awsv2.Register("aws_db_event_subscription", sweepEventSubscriptions)

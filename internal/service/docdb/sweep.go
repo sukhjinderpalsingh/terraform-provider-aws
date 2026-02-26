@@ -6,7 +6,6 @@ package docdb
 import (
 	"context"
 	"log"
-	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/docdb"
@@ -20,7 +19,6 @@ import (
 func RegisterSweepers() {
 	awsv2.Register("aws_docdb_cluster", sweepClusters, "aws_docdb_cluster_instance")
 	awsv2.Register("aws_docdb_cluster_instance", sweepClusterInstances)
-	awsv2.Register("aws_docdb_cluster_parameter_group", sweepClusterParameterGroups, "aws_docdb_cluster")
 	awsv2.Register("aws_docdb_cluster_snapshot", sweepClusterSnapshots, "aws_docdb_cluster")
 	awsv2.Register("aws_docdb_event_subscription", sweepEventSubscriptions)
 	awsv2.Register("aws_docdb_global_cluster", sweepClusterSnapshots, "aws_docdb_cluster")
@@ -92,38 +90,6 @@ func sweepClusterSnapshots(ctx context.Context, client *conns.AWSClient) ([]swee
 			r := ResourceClusterSnapshot()
 			d := r.Data(nil)
 			d.SetId(aws.ToString(v.DBClusterSnapshotIdentifier))
-
-			sweepResources = append(sweepResources, sweep.NewSweepResource(r, d, client))
-		}
-	}
-
-	return sweepResources, nil
-}
-
-func sweepClusterParameterGroups(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweepable, error) {
-	conn := client.DocDBClient(ctx)
-	var input docdb.DescribeDBClusterParameterGroupsInput
-	sweepResources := make([]sweep.Sweepable, 0)
-
-	pages := docdb.NewDescribeDBClusterParameterGroupsPaginator(conn, &input)
-	for pages.HasMorePages() {
-		page, err := pages.NextPage(ctx)
-
-		if err != nil {
-			return nil, err
-		}
-
-		for _, v := range page.DBClusterParameterGroups {
-			name := aws.ToString(v.DBClusterParameterGroupName)
-
-			if strings.HasPrefix(name, "default.") {
-				log.Printf("[INFO] Skipping DocumentDB Cluster Parameter Group: %s", name)
-				continue
-			}
-
-			r := resourceClusterParameterGroup()
-			d := r.Data(nil)
-			d.SetId(name)
 
 			sweepResources = append(sweepResources, sweep.NewSweepResource(r, d, client))
 		}

@@ -31,14 +31,6 @@ func RegisterSweepers() {
 		F:    sweepClusterInstances,
 	})
 
-	resource.AddTestSweepers("aws_neptune_cluster_parameter_group", &resource.Sweeper{
-		Name: "aws_neptune_cluster_parameter_group",
-		F:    sweepClusterParameterGroups,
-		Dependencies: []string{
-			"aws_neptune_cluster",
-		},
-	})
-
 	resource.AddTestSweepers("aws_neptune_cluster_snapshot", &resource.Sweeper{
 		Name: "aws_neptune_cluster_snapshot",
 		F:    sweepClusterSnapshots,
@@ -205,54 +197,6 @@ func sweepClusterSnapshots(region string) error {
 
 	if err != nil {
 		return fmt.Errorf("sweeping Neptune Cluster Snapshots (%s): %w", region, err)
-	}
-
-	return nil
-}
-
-func sweepClusterParameterGroups(region string) error {
-	ctx := sweep.Context(region)
-	client, err := sweep.SharedRegionalSweepClient(ctx, region)
-	if err != nil {
-		return fmt.Errorf("getting client: %w", err)
-	}
-	conn := client.NeptuneClient(ctx)
-	input := &neptune.DescribeDBClusterParameterGroupsInput{}
-	sweepResources := make([]sweep.Sweepable, 0)
-
-	pages := neptune.NewDescribeDBClusterParameterGroupsPaginator(conn, input)
-	for pages.HasMorePages() {
-		page, err := pages.NextPage(ctx)
-
-		if awsv2.SkipSweepError(err) {
-			log.Printf("[WARN] Skipping Neptune Cluster Parameter Group sweep for %s: %s", region, err)
-			return nil
-		}
-
-		if err != nil {
-			return fmt.Errorf("error listing Neptune Cluster Parameter Groups (%s): %w", region, err)
-		}
-
-		for _, v := range page.DBClusterParameterGroups {
-			name := aws.ToString(v.DBClusterParameterGroupName)
-
-			if strings.HasPrefix(name, "default.") {
-				log.Printf("[INFO] Skipping Neptune Cluster Parameter Group: %s", name)
-				continue
-			}
-
-			r := resourceClusterParameterGroup()
-			d := r.Data(nil)
-			d.SetId(name)
-
-			sweepResources = append(sweepResources, sweep.NewSweepResource(r, d, client))
-		}
-	}
-
-	err = sweep.SweepOrchestrator(ctx, sweepResources)
-
-	if err != nil {
-		return fmt.Errorf("error sweeping Neptune Cluster Parameter Groups (%s): %w", region, err)
 	}
 
 	return nil
