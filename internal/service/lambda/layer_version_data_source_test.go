@@ -11,8 +11,92 @@ import (
 	"github.com/hashicorp/aws-sdk-go-base/v2/endpoints"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-provider-aws/internal/acctest"
+	tflambda "github.com/hashicorp/terraform-provider-aws/internal/service/lambda"
 	"github.com/hashicorp/terraform-provider-aws/names"
 )
+
+func TestParseLayerVersionARN(t *testing.T) {
+	tests := []struct {
+		name        string
+		arn         string
+		wantLayer   string
+		wantVersion int64
+		wantErr     bool
+	}{
+		{
+			name:        "valid ARN",
+			arn:         "arn:aws:lambda:us-east-1:123456789012:layer:test-layer:1", // lintignore:AWSAT003,AWSAT005
+			wantLayer:   "arn:aws:lambda:us-east-1:123456789012:layer:test-layer",   // lintignore:AWSAT003,AWSAT005
+			wantVersion: 1,
+			wantErr:     false,
+		},
+		{
+			name:    "no version",
+			arn:     "arn:aws:lambda:us-east-1:123456789012:layer:test-layer", // lintignore:AWSAT003,AWSAT005
+			wantErr: true,
+		},
+		{
+			name:    "invalid format",
+			arn:     "invalid-arn",
+			wantErr: true,
+		},
+		{
+			name:    "invalid version",
+			arn:     "arn:aws:lambda:us-east-1:123456789012:layer:test-layer:abc", // lintignore:AWSAT003,AWSAT005
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			layer, version, err := tflambda.ParseLayerVersionARN(tt.arn)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseLayerVersionARN() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr {
+				if layer != tt.wantLayer {
+					t.Errorf("parseLayerVersionARN() layer = %v, want %v", layer, tt.wantLayer)
+				}
+				if version != tt.wantVersion {
+					t.Errorf("parseLayerVersionARN() version = %v, want %v", version, tt.wantVersion)
+				}
+			}
+		})
+	}
+}
+
+func TestLayerNameFromARN(t *testing.T) {
+	tests := []struct {
+		name     string
+		layerArn string
+		want     string
+	}{
+		{
+			name:     "valid ARN",
+			layerArn: "arn:aws:lambda:us-east-1:123456789012:layer:test-layer", // lintignore:AWSAT003,AWSAT005
+			want:     "test-layer",
+		},
+		{
+			name:     "invalid ARN",
+			layerArn: "invalid-arn",
+			want:     "",
+		},
+		{
+			name:     "short ARN",
+			layerArn: "arn:aws:lambda",
+			want:     "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tflambda.LayerNameFromARN(tt.layerArn); got != tt.want {
+				t.Errorf("layerNameFromARN() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
 func TestAccLambdaLayerVersionDataSource_basic(t *testing.T) {
 	ctx := acctest.Context(t)
