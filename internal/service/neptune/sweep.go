@@ -39,11 +39,6 @@ func RegisterSweepers() {
 		},
 	})
 
-	resource.AddTestSweepers("aws_neptune_event_subscription", &resource.Sweeper{
-		Name: "aws_neptune_event_subscription",
-		F:    sweepEventSubscriptions,
-	})
-
 	resource.AddTestSweepers("aws_neptune_global_cluster", &resource.Sweeper{
 		Name: "aws_neptune_global_cluster",
 		F:    sweepGlobalClusters,
@@ -59,47 +54,6 @@ func RegisterSweepers() {
 			"aws_neptune_cluster_instance",
 		},
 	})
-}
-
-func sweepEventSubscriptions(region string) error {
-	ctx := sweep.Context(region)
-	client, err := sweep.SharedRegionalSweepClient(ctx, region)
-	if err != nil {
-		return fmt.Errorf("getting client: %w", err)
-	}
-	conn := client.NeptuneClient(ctx)
-	input := &neptune.DescribeEventSubscriptionsInput{}
-	sweepResources := make([]sweep.Sweepable, 0)
-
-	pages := neptune.NewDescribeEventSubscriptionsPaginator(conn, input)
-	for pages.HasMorePages() {
-		page, err := pages.NextPage(ctx)
-
-		if awsv2.SkipSweepError(err) {
-			log.Printf("[WARN] Skipping Neptune Event Subscription sweep for %s: %s", region, err)
-			return nil
-		}
-
-		if err != nil {
-			return fmt.Errorf("listing Neptune Event Subscriptions (%s): %w", region, err)
-		}
-
-		for _, v := range page.EventSubscriptionsList {
-			r := resourceEventSubscription()
-			d := r.Data(nil)
-			d.SetId(aws.ToString(v.CustSubscriptionId))
-
-			sweepResources = append(sweepResources, sweep.NewSweepResource(r, d, client))
-		}
-	}
-
-	err = sweep.SweepOrchestrator(ctx, sweepResources)
-
-	if err != nil {
-		return fmt.Errorf("sweeping Neptune Event Subscriptions (%s): %w", region, err)
-	}
-
-	return nil
 }
 
 func sweepClusters(region string) error {
