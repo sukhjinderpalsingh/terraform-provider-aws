@@ -84,7 +84,7 @@ func TestLayerNameFromARN(t *testing.T) {
 		},
 		{
 			name:     "short ARN",
-			layerArn: "arn:aws:lambda",
+			layerArn: "arn:aws:lambda", // lintignore:AWSAT005
 			want:     "",
 		},
 	}
