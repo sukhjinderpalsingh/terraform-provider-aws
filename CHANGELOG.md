@@ -1,5 +1,9 @@
 ## 6.35.0 (Unreleased)
 
+FEATURES:
+
+* **New List Resource:** `aws_lb` ([#46660](https://github.com/hashicorp/terraform-provider-aws/issues/46660))
+
 ENHANCEMENTS:
 
 * data-source/aws_lambda_layer_version: Add `layer_version_arn` argument to support cross-account Lambda layer access ([#46673](https://github.com/hashicorp/terraform-provider-aws/issues/46673))
