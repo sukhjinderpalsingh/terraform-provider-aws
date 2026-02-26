@@ -239,6 +239,13 @@ func TestAccCECostCategory_splitChargeOrdering(t *testing.T) {
 					testAccCheckCostCategoryExists(ctx, resourceName, &output),
 					resource.TestCheckResourceAttr(resourceName, names.AttrName, rName),
 					testAccCheckCostCategorySplitChargeRuleOrder(ctx, resourceName),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "split_charge_rule.*", map[string]string{
+						"targets.#":   "3",
+						"targets.0":   "APP-A",
+						"targets.1":   "APP-B",
+						"targets.2":   "APP-C",
+						"parameter.#": "1",
+					}),
 				),
 			},
 			{
@@ -376,18 +383,26 @@ func testAccCheckCostCategorySplitChargeRuleOrder(ctx context.Context, n string)
 			return err
 		}
 
-		splitChargeRuleTargetOrder := []string{"appA", "appB", "appC"}
-		splitChargeRuleValueOrder := []string{"20", "30", "50"}
+		if len(output.SplitChargeRules) == 0 {
+			return fmt.Errorf("expected at least 1 split charge rule, got 0")
+		}
+
+		if len(output.SplitChargeRules[0].Parameters) == 0 {
+			return fmt.Errorf("expected at least 1 parameter in split charge rule, got 0")
+		}
+
+		splitChargeRuleTargetOrder := []string{"APP-A", "APP-B", "APP-C"}
+		splitChargeRuleValueOrder := []string{"10", "30", "60"}
 
 		splitChargeRuleTargets := output.SplitChargeRules[0].Targets
 		splitChargeRuleValues := output.SplitChargeRules[0].Parameters[0].Values
 
 		if !slices.Equal(splitChargeRuleTargets, splitChargeRuleTargetOrder) {
-			return fmt.Errorf("Split charge rule target order mismatch, expected: %s, got %s", splitChargeRuleTargetOrder, splitChargeRuleTargets)
+			return fmt.Errorf("split charge rule target order mismatch, expected: %v, got: %v", splitChargeRuleTargetOrder, splitChargeRuleTargets)
 		}
 
 		if !slices.Equal(splitChargeRuleValues, splitChargeRuleValueOrder) {
-			return fmt.Errorf("Split charge rule value order mismatch, expected: %s, got %s", splitChargeRuleValueOrder, splitChargeRuleValues)
+			return fmt.Errorf("split charge rule value order mismatch, expected: %v, got: %v", splitChargeRuleValueOrder, splitChargeRuleValues)
 		}
 
 		return nil
@@ -607,16 +622,16 @@ resource "aws_ce_cost_category" "test" {
     source  = "ecs"
     method  = "FIXED"
     targets = [
-      "appA",
-      "appB",
-      "appC",
+      "APP-A",
+      "APP-B",
+      "APP-C",
     ]
     parameter {
       type   = "ALLOCATION_PERCENTAGES"
       values = [
-        20,
-        30,
-        50,
+        "10",
+        "30",
+        "60",
       ]
     }
   }
