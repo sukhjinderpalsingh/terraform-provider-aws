@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-provider-aws/internal/sweep"
 	"github.com/hashicorp/terraform-provider-aws/internal/sweep/awsv2"
 	"github.com/hashicorp/terraform-provider-aws/internal/sweep/framework"
-	"github.com/hashicorp/terraform-provider-aws/names"
 )
 
 func RegisterSweepers() {
@@ -34,12 +33,8 @@ func sweepMonitors(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweepa
 		}
 
 		for _, v := range page.Monitors {
-			arn := aws.ToString(v.MonitorArn)
-			name := aws.ToString(v.MonitorName)
-
 			sweepResources = append(sweepResources, framework.NewSweepResource(newMonitorResource, client,
-				framework.NewAttribute(names.AttrID, arn),
-				framework.NewAttribute("monitor_name", name),
+				framework.NewAttribute("monitor_name", aws.ToString(v.MonitorName)),
 			))
 		}
 	}
@@ -61,12 +56,8 @@ func sweepScopes(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweepabl
 		}
 
 		for _, v := range page.Scopes {
-			scopeId := aws.ToString(v.ScopeId)
-			scopeArn := aws.ToString(v.ScopeArn)
-
 			sweepResources = append(sweepResources, framework.NewSweepResource(newScopeResource, client,
-				framework.NewAttribute(names.AttrID, scopeArn),
-				framework.NewAttribute("scope_id", scopeId),
+				framework.NewAttribute("scope_id", aws.ToString(v.ScopeId)),
 			))
 		}
 	}
