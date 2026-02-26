@@ -1591,6 +1591,12 @@ func resourceServiceRead(ctx context.Context, d *schema.ResourceData, meta any) 
 		return sdkdiag.AppendErrorf(diags, "reading ECS Service (%s): %s", d.Id(), err)
 	}
 
+	return append(diags, resourceServiceFlatten(ctx, d, service, cluster)...)
+}
+
+func resourceServiceFlatten(ctx context.Context, d *schema.ResourceData, service *awstypes.Service, cluster string) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	d.Set(names.AttrARN, service.ServiceArn)
 	d.Set("availability_zone_rebalancing", service.AvailabilityZoneRebalancing)
 	if err := d.Set(names.AttrCapacityProviderStrategy, flattenCapacityProviderStrategyItems(service.CapacityProviderStrategy)); err != nil {

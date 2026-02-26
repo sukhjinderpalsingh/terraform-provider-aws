@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"iter"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
 	awstypes "github.com/aws/aws-sdk-go-v2/service/ecs/types"
 	"github.com/hashicorp/terraform-plugin-framework/list"
@@ -24,7 +25,6 @@ import (
 	"github.com/hashicorp/terraform-provider-aws/names"
 )
 
-// Function annotations are used for list resource registration to the Provider. DO NOT EDIT.
 // @SDKListResource("aws_ecs_service")
 func newServiceResourceAsListResource() inttypes.ListResourceForSDK {
 	l := listResourceService{}
@@ -82,25 +82,34 @@ func (l *listResourceService) List(ctx context.Context, request list.ListRequest
 
 			ctx := tflog.SetField(ctx, logging.ResourceAttributeKey(names.AttrID), serviceArn)
 
+			cluster := query.Cluster.ValueString()
 			result := request.NewListResult(ctx)
 			rd := l.ResourceData()
 			rd.SetId(serviceArn)
-			rd.Set("cluster", query.Cluster.ValueString())
+			rd.Set("cluster", cluster)
 
 			tflog.Info(ctx, "Reading ECS (Elastic Container) Service")
-			diags := resourceServiceRead(ctx, rd, l.Meta())
-			if diags.HasError() {
+			service, err := findServiceByTwoPartKey(ctx, conn, serviceArn, cluster)
+			if err != nil {
 				tflog.Error(ctx, "Reading ECS (Elastic Container) Service", map[string]any{
+					"err": err.Error(),
+				})
+				continue
+			}
+
+			if status := aws.ToString(service.Status); status != serviceStatusActive {
+				continue
+			}
+
+			diags := resourceServiceFlatten(ctx, rd, service, cluster)
+			if diags.HasError() {
+				tflog.Error(ctx, "Flatten ECS (Elastic Container) Service", map[string]any{
 					"diags": sdkdiag.DiagnosticsString(diags),
 				})
 				continue
 			}
-			if rd.Id() == "" {
-				tflog.Warn(ctx, "Resource disappeared during listing, skipping")
-				continue
-			}
 
-			result.DisplayName = rd.Get(names.AttrName).(string)
+			result.DisplayName = aws.ToString(service.ServiceName)
 
 			l.SetResult(ctx, l.Meta(), request.IncludeResource, &result, rd)
 			if result.Diagnostics.HasError() {
