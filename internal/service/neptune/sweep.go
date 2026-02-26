@@ -6,7 +6,6 @@ package neptune
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/neptune"
@@ -44,14 +43,6 @@ func RegisterSweepers() {
 		F:    sweepGlobalClusters,
 		Dependencies: []string{
 			"aws_neptune_cluster",
-		},
-	})
-
-	resource.AddTestSweepers("aws_neptune_parameter_group", &resource.Sweeper{
-		Name: "aws_neptune_parameter_group",
-		F:    sweepParameterGroups,
-		Dependencies: []string{
-			"aws_neptune_cluster_instance",
 		},
 	})
 }
@@ -246,54 +237,6 @@ func sweepGlobalClusters(region string) error {
 
 	if err != nil {
 		return fmt.Errorf("sweeping Neptune Global Clusters (%s): %w", region, err)
-	}
-
-	return nil
-}
-
-func sweepParameterGroups(region string) error {
-	ctx := sweep.Context(region)
-	client, err := sweep.SharedRegionalSweepClient(ctx, region)
-	if err != nil {
-		return fmt.Errorf("getting client: %w", err)
-	}
-	conn := client.NeptuneClient(ctx)
-	input := &neptune.DescribeDBParameterGroupsInput{}
-	sweepResources := make([]sweep.Sweepable, 0)
-
-	pages := neptune.NewDescribeDBParameterGroupsPaginator(conn, input)
-	for pages.HasMorePages() {
-		page, err := pages.NextPage(ctx)
-
-		if awsv2.SkipSweepError(err) {
-			log.Printf("[WARN] Skipping Neptune Parameter Group sweep for %s: %s", region, err)
-			return nil
-		}
-
-		if err != nil {
-			return fmt.Errorf("error listing Neptune Parameter Groups (%s): %w", region, err)
-		}
-
-		for _, v := range page.DBParameterGroups {
-			name := aws.ToString(v.DBParameterGroupName)
-
-			if strings.HasPrefix(name, "default.") {
-				log.Printf("[INFO] Skipping Neptune Parameter Group: %s", name)
-				continue
-			}
-
-			r := resourceParameterGroup()
-			d := r.Data(nil)
-			d.SetId(name)
-
-			sweepResources = append(sweepResources, sweep.NewSweepResource(r, d, client))
-		}
-	}
-
-	err = sweep.SweepOrchestrator(ctx, sweepResources)
-
-	if err != nil {
-		return fmt.Errorf("error sweeping Neptune Parameter Groups (%s): %w", region, err)
 	}
 
 	return nil

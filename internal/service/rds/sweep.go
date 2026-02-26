@@ -34,7 +34,7 @@ func RegisterSweepers() {
 	awsv2.Register("aws_rds_global_cluster", sweepGlobalClusters)
 	awsv2.Register("aws_db_instance", sweepInstances, "aws_rds_global_cluster")
 	awsv2.Register("aws_db_option_group", sweepOptionGroups, "aws_rds_cluster", "aws_db_snapshot")
-	awsv2.Register("aws_db_parameter_group", sweepParameterGroups, "aws_db_instance")
+	awsv2.Register("aws_db_parameter_group", sweepParameterGroups, "aws_db_instance", "aws_neptune_cluster_instance")
 	awsv2.Register("aws_db_proxy", sweepProxies)
 	awsv2.Register("aws_db_snapshot", sweepSnapshots, "aws_db_instance")
 	awsv2.Register("aws_db_subnet_group", sweepSubnetGroups, "aws_rds_cluster", "aws_docdb_cluster", "aws_neptune_cluster")
