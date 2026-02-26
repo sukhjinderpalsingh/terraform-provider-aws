@@ -4,12 +4,11 @@
 package networkflowmonitor
 
 import (
-	"fmt"
-	"log"
+	"context"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/networkflowmonitor"
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-provider-aws/internal/conns"
 	"github.com/hashicorp/terraform-provider-aws/internal/sweep"
 	"github.com/hashicorp/terraform-provider-aws/internal/sweep/awsv2"
 	"github.com/hashicorp/terraform-provider-aws/internal/sweep/framework"
@@ -17,38 +16,21 @@ import (
 )
 
 func RegisterSweepers() {
-	resource.AddTestSweepers("aws_networkflowmonitor_monitor", &resource.Sweeper{
-		Name: "aws_networkflowmonitor_monitor",
-		F:    sweepMonitors,
-	})
-
-	resource.AddTestSweepers("aws_networkflowmonitor_scope", &resource.Sweeper{
-		Name: "aws_networkflowmonitor_scope",
-		F:    sweepScopes,
-	})
+	awsv2.Register("aws_networkflowmonitor_monitor", sweepMonitors)
+	awsv2.Register("aws_networkflowmonitor_scope", sweepScopes)
 }
 
-func sweepMonitors(region string) error {
-	ctx := sweep.Context(region)
-	client, err := sweep.SharedRegionalSweepClient(ctx, region)
-	if err != nil {
-		return fmt.Errorf("error getting client: %w", err)
-	}
+func sweepMonitors(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweepable, error) {
 	conn := client.NetworkFlowMonitorClient(ctx)
-	input := networkflowmonitor.ListMonitorsInput{}
+	var input networkflowmonitor.ListMonitorsInput
 	sweepResources := make([]sweep.Sweepable, 0)
 
 	pages := networkflowmonitor.NewListMonitorsPaginator(conn, &input)
 	for pages.HasMorePages() {
 		page, err := pages.NextPage(ctx)
 
-		if awsv2.SkipSweepError(err) {
-			log.Printf("[WARN] Skipping Network Flow Monitor Monitor sweep for %s: %s", region, err)
-			return nil
-		}
-
 		if err != nil {
-			return fmt.Errorf("error listing Network Flow Monitor Monitors (%s): %w", region, err)
+			return nil, err
 		}
 
 		for _, v := range page.Monitors {
@@ -62,35 +44,20 @@ func sweepMonitors(region string) error {
 		}
 	}
 
-	err = sweep.SweepOrchestrator(ctx, sweepResources)
-
-	if err != nil {
-		return fmt.Errorf("error sweeping Network Flow Monitor Monitors (%s): %w", region, err)
-	}
-
-	return nil
+	return sweepResources, nil
 }
-func sweepScopes(region string) error {
-	ctx := sweep.Context(region)
-	client, err := sweep.SharedRegionalSweepClient(ctx, region)
-	if err != nil {
-		return fmt.Errorf("error getting client: %w", err)
-	}
+
+func sweepScopes(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweepable, error) {
 	conn := client.NetworkFlowMonitorClient(ctx)
-	input := networkflowmonitor.ListScopesInput{}
+	var input networkflowmonitor.ListScopesInput
 	sweepResources := make([]sweep.Sweepable, 0)
 
 	pages := networkflowmonitor.NewListScopesPaginator(conn, &input)
 	for pages.HasMorePages() {
 		page, err := pages.NextPage(ctx)
 
-		if awsv2.SkipSweepError(err) {
-			log.Printf("[WARN] Skipping Network Flow Monitor Scope sweep for %s: %s", region, err)
-			return nil
-		}
-
 		if err != nil {
-			return fmt.Errorf("error listing Network Flow Monitor Scopes (%s): %w", region, err)
+			return nil, err
 		}
 
 		for _, v := range page.Scopes {
@@ -104,11 +71,5 @@ func sweepScopes(region string) error {
 		}
 	}
 
-	err = sweep.SweepOrchestrator(ctx, sweepResources)
-
-	if err != nil {
-		return fmt.Errorf("error sweeping Network Flow Monitor Scopes (%s): %w", region, err)
-	}
-
-	return nil
+	return sweepResources, nil
 }
