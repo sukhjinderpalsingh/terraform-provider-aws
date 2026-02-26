@@ -134,8 +134,8 @@ data "aws_lambda_layer_version" "latest_shared" {
 
 One of the following argument combinations is required:
 
-* `layer_name` - Name of the Lambda layer.
-* `layer_version_arn` - ARN of the Lambda layer version. Can be a full ARN with version (e.g., `arn:aws:lambda:region:account:layer:name:1`) or without version (e.g., `arn:aws:lambda:region:account:layer:name`). When the version is omitted, the latest version will be retrieved (requires `lambda:ListLayerVersions` permission). Use the full ARN with version for cross-account layers where you don't have list permissions.
+* `layer_name` - (Required) Name of the Lambda layer.
+* `layer_version_arn` - (Required) ARN of the Lambda layer version. Can be a full ARN with version (e.g., `arn:aws:lambda:region:account:layer:name:1`) or without version (e.g., `arn:aws:lambda:region:account:layer:name`). When the version is omitted, the latest version will be retrieved (requires `lambda:ListLayerVersions` permission). Use the full ARN with version for cross-account layers where you don't have list permissions.
 
 The following arguments are optional when using `layer_name`:
 
@@ -160,4 +160,3 @@ This data source exports the following attributes in addition to the arguments a
 * `signing_profile_version_arn` - ARN for a signing profile version.
 * `source_code_hash` - (**Deprecated** use `code_sha256` instead) Base64-encoded representation of raw SHA-256 sum of the zip file.
 * `source_code_size` - Size in bytes of the function .zip file.
-* `version` - Lambda Layer version.
