@@ -2441,6 +2441,10 @@ func expandOracleSettings(tfMap map[string]any, endpointType awstypes.Replicatio
 
 	apiObject := &awstypes.OracleSettings{}
 
+	if v, ok := tfMap["authentication_method"].(string); ok && v != "" {
+		apiObject.AuthenticationMethod = awstypes.OracleAuthenticationMethod(v)
+	}
+
 	switch endpointType {
 	case awstypes.ReplicationEndpointTypeValueSource:
 		// https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Source.Oracle.html#CHAP_Source.Oracle.ConnectionAttrib
