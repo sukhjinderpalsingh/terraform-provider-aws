@@ -13,6 +13,7 @@ ENHANCEMENTS:
 BUG FIXES:
 
 * resource/aws_ce_cost_category: Change `split_charge_rule` `targets` from `TypeSet` to `TypeList` to retain order ([#42856](https://github.com/hashicorp/terraform-provider-aws/issues/42856))
+* resource/aws_dms_endpoint: Fix `InvalidParameterCombinationException` errors when `oracle_settings` is configured ([#46689](https://github.com/hashicorp/terraform-provider-aws/issues/46689))
 * resource/aws_elasticache_replication_group: Remove hard-coded upper limit of 5 for `replicas_per_node_group` and `node_group_configuration.replica_count` to support quota increases ([#46670](https://github.com/hashicorp/terraform-provider-aws/issues/46670))
 * resource/aws_networkmanager_attachment_routing_policy_label: Fix attachment state waiter to handle all Cloud WAN attachment lifecycle states ([#46672](https://github.com/hashicorp/terraform-provider-aws/issues/46672))
 
