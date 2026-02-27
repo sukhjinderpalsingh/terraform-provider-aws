@@ -18,8 +18,6 @@ import (
 	"github.com/hashicorp/terraform-provider-aws/internal/conns"
 	"github.com/hashicorp/terraform-provider-aws/internal/errs"
 	"github.com/hashicorp/terraform-provider-aws/internal/retry"
-	tfdocdb "github.com/hashicorp/terraform-provider-aws/internal/service/docdb"
-	tfneptune "github.com/hashicorp/terraform-provider-aws/internal/service/neptune"
 	"github.com/hashicorp/terraform-provider-aws/internal/sweep"
 	"github.com/hashicorp/terraform-provider-aws/internal/sweep/awsv2"
 	"github.com/hashicorp/terraform-provider-aws/internal/sweep/framework"
@@ -92,7 +90,7 @@ func sweepClusterSnapshots(ctx context.Context, client *conns.AWSClient) ([]swee
 		}
 
 		for _, v := range page.DBClusterSnapshots {
-			if engine := aws.ToString(v.Engine); engine == tfdocdb.EngineDocDB || engine == tfneptune.DefaultEngine {
+			if engine := aws.ToString(v.Engine); engine == clusterEngineDocDB || engine == clusterEngineNeptune {
 				// DocDB and Neptune cluster snapshots are handled by their respective services' sweepers.
 				continue
 			}
@@ -130,7 +128,7 @@ func sweepClusters(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweepa
 
 		for _, v := range page.DBClusters {
 			// DocDB and Neptune clusters are handled by their respective services' sweepers.
-			if engine := aws.ToString(v.Engine); engine == tfdocdb.EngineDocDB || engine == tfneptune.DefaultEngine {
+			if engine := aws.ToString(v.Engine); engine == clusterEngineDocDB || engine == clusterEngineNeptune {
 				continue
 			}
 
@@ -204,7 +202,7 @@ func sweepGlobalClusters(ctx context.Context, client *conns.AWSClient) ([]sweep.
 		}
 
 		for _, v := range page.GlobalClusters {
-			if engine := aws.ToString(v.Engine); engine == tfdocdb.EngineDocDB || engine == tfneptune.DefaultEngine {
+			if engine := aws.ToString(v.Engine); engine == globalClusterEngineDocDB || engine == globalClusterEngineNeptune {
 				// DocDB and Neptune global clusters are handled by their respective services' sweepers.
 				continue
 			}
@@ -239,7 +237,7 @@ func sweepInstances(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweep
 			id := aws.ToString(v.DbiResourceId)
 
 			switch engine := aws.ToString(v.Engine); engine {
-			case tfdocdb.EngineDocDB, tfneptune.DefaultEngine:
+			case instanceEngineDocDB, instanceEngineNeptune:
 				// These engines are handled by their respective services' sweepers.
 				continue
 			case InstanceEngineMySQL:

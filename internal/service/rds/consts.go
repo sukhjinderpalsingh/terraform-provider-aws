@@ -79,6 +79,10 @@ const (
 	InstanceEngineSQLServerExpress    = "sqlserver-ex"
 	InstanceEngineSQLServerStandard   = "sqlserver-se"
 	InstanceEngineSQLServerWeb        = "sqlserver-web"
+
+	// Not valid for RDS instances.
+	instanceEngineDocDB   = "docdb"
+	instanceEngineNeptune = "neptune"
 )
 
 // https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/accessing-monitoring.html#Overview.DBInstance.Status.
@@ -148,6 +152,10 @@ const (
 	ClusterEngineMySQL            = "mysql"
 	ClusterEnginePostgres         = "postgres"
 	ClusterEngineCustomPrefix     = "custom-"
+
+	// Not valid for RDS clusters.
+	clusterEngineDocDB   = "docdb"
+	clusterEngineNeptune = "neptune"
 )
 
 func clusterEngine_Values() []string {
@@ -172,6 +180,10 @@ const (
 	globalClusterEngineAurora           = "aurora"
 	globalClusterEngineAuroraMySQL      = "aurora-mysql"
 	globalClusterEngineAuroraPostgreSQL = "aurora-postgresql"
+
+	// Not valid for RDS global clusters.
+	globalClusterEngineDocDB   = "docdb"
+	globalClusterEngineNeptune = "neptune"
 )
 
 func globalClusterEngine_Values() []string {
