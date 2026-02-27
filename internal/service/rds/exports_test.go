@@ -71,6 +71,11 @@ var (
 	WaitDBInstanceAvailable                    = waitDBInstanceAvailable
 	WaitDBInstanceDeleted                      = waitDBInstanceDeleted
 
+	ClusterEngineAuroraMySQL      = clusterEngineAuroraMySQL
+	ClusterEngineAuroraPostgreSQL = clusterEngineAuroraPostgreSQL
+	ClusterEngineMySQL            = clusterEngineMySQL
+	ClusterEnginePostgres         = clusterEnginePostgres
+
 	ErrCodeInvalidAction               = errCodeInvalidAction
 	ErrCodeInvalidParameterCombination = errCodeInvalidParameterCombination
 	ErrCodeInvalidParameterValue       = errCodeInvalidParameterValue

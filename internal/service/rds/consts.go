@@ -147,11 +147,10 @@ const (
 )
 
 const (
-	ClusterEngineAuroraMySQL      = "aurora-mysql"
-	ClusterEngineAuroraPostgreSQL = "aurora-postgresql"
-	ClusterEngineMySQL            = "mysql"
-	ClusterEnginePostgres         = "postgres"
-	ClusterEngineCustomPrefix     = "custom-"
+	clusterEngineAuroraMySQL      = "aurora-mysql"
+	clusterEngineAuroraPostgreSQL = "aurora-postgresql"
+	clusterEngineMySQL            = "mysql"
+	clusterEnginePostgres         = "postgres"
 
 	// Not valid for RDS clusters.
 	clusterEngineDocDB   = "docdb"
@@ -160,19 +159,19 @@ const (
 
 func clusterEngine_Values() []string {
 	return []string{
-		ClusterEngineAuroraMySQL,
-		ClusterEngineAuroraPostgreSQL,
-		ClusterEngineMySQL,
-		ClusterEnginePostgres,
+		clusterEngineAuroraMySQL,
+		clusterEngineAuroraPostgreSQL,
+		clusterEngineMySQL,
+		clusterEnginePostgres,
 	}
 }
 
 func clusterInstanceEngine_Values() []string {
 	return []string{
-		ClusterEngineAuroraMySQL,
-		ClusterEngineAuroraPostgreSQL,
-		ClusterEngineMySQL,
-		ClusterEnginePostgres,
+		clusterEngineAuroraMySQL,
+		clusterEngineAuroraPostgreSQL,
+		clusterEngineMySQL,
+		clusterEnginePostgres,
 	}
 }
 
