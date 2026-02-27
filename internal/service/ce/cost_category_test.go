@@ -225,20 +225,20 @@ func TestAccCECostCategory_splitChargeOrdering(t *testing.T) {
 	ctx := acctest.Context(t)
 	var output awstypes.CostCategory
 	resourceName := "aws_ce_cost_category.test"
-	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
+	rName := acctest.RandomWithPrefix(t, acctest.ResourcePrefix)
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(ctx, t); testAccPreCheckPayerAccount(ctx, t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
-		CheckDestroy:             testAccCheckCostCategoryDestroy(ctx),
+		CheckDestroy:             testAccCheckCostCategoryDestroy(ctx, t),
 		ErrorCheck:               acctest.ErrorCheck(t, names.CEServiceID),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCostCategoryConfig_splitChargeOrdering(rName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCostCategoryExists(ctx, resourceName, &output),
+					testAccCheckCostCategoryExists(ctx, t, resourceName, &output),
 					resource.TestCheckResourceAttr(resourceName, names.AttrName, rName),
-					testAccCheckCostCategorySplitChargeRuleOrder(ctx, resourceName),
+					testAccCheckCostCategorySplitChargeRuleOrder(ctx, resourceName, t),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "split_charge_rule.*", map[string]string{
 						"targets.#":   "3",
 						"targets.0":   "APP-A",
@@ -368,14 +368,14 @@ func testAccCheckCostCategoryDestroy(ctx context.Context, t *testing.T) resource
 	}
 }
 
-func testAccCheckCostCategorySplitChargeRuleOrder(ctx context.Context, n string) resource.TestCheckFunc {
+func testAccCheckCostCategorySplitChargeRuleOrder(ctx context.Context, n string, t *testing.T) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)
 		}
 
-		conn := acctest.Provider.Meta().(*conns.AWSClient).CEClient(ctx)
+		conn := acctest.ProviderMeta(ctx, t).CEClient(ctx)
 
 		output, err := tfce.FindCostCategoryByARN(ctx, conn, rs.Primary.ID)
 
@@ -619,15 +619,18 @@ resource "aws_ce_cost_category" "test" {
   }
 
   split_charge_rule {
-    source  = "ecs"
-    method  = "FIXED"
+    source = "ecs"
+    method = "FIXED"
+
     targets = [
       "APP-A",
       "APP-B",
       "APP-C",
     ]
+
     parameter {
-      type   = "ALLOCATION_PERCENTAGES"
+      type = "ALLOCATION_PERCENTAGES"
+
       values = [
         "10",
         "30",
