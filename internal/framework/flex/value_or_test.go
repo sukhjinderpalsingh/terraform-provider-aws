@@ -52,7 +52,7 @@ func TestInt64ValueOr(t *testing.T) {
 func TestStringValueOr(t *testing.T) {
 	t.Parallel()
 
-	var defaultValue string = "THE-DEFAULT"
+	defaultValue := "THE-DEFAULT"
 	type testCase struct {
 		input    types.String
 		expected string
@@ -88,7 +88,7 @@ func TestStringValueOr(t *testing.T) {
 func TestStringEnumValueOr(t *testing.T) {
 	t.Parallel()
 
-	var defaultValue awstypes.AclPermission = awstypes.AclPermissionRead
+	defaultValue := awstypes.AclPermissionRead
 	type testCase struct {
 		input    fwtypes.StringEnum[awstypes.AclPermission]
 		expected awstypes.AclPermission
