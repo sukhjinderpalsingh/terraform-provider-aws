@@ -2,6 +2,7 @@
 
 FEATURES:
 
+* **New List Resource:** `aws_ecs_service` ([#46678](https://github.com/hashicorp/terraform-provider-aws/issues/46678))
 * **New List Resource:** `aws_lb` ([#46660](https://github.com/hashicorp/terraform-provider-aws/issues/46660))
 
 ENHANCEMENTS:
