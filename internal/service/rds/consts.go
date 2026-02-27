@@ -63,26 +63,27 @@ const (
 )
 
 const (
-	InstanceEngineAuroraMySQL         = "aurora-mysql"
-	InstanceEngineAuroraPostgreSQL    = "aurora-postgresql"
-	InstanceEngineCustomPrefix        = "custom-"
-	InstanceEngineDB2Advanced         = "db2-ae"
-	InstanceEngineDB2Standard         = "db2-se"
-	InstanceEngineMariaDB             = "mariadb"
-	InstanceEngineMySQL               = "mysql"
-	InstanceEngineOracleEnterprise    = "oracle-ee"
-	InstanceEngineOracleEnterpriseCDB = "oracle-ee-cdb"
-	InstanceEngineOracleStandard2     = "oracle-se2"
-	InstanceEngineOracleStandard2CDB  = "oracle-se2-cdb"
-	InstanceEnginePostgres            = "postgres"
-	InstanceEngineSQLServerEnterprise = "sqlserver-ee"
-	InstanceEngineSQLServerExpress    = "sqlserver-ex"
-	InstanceEngineSQLServerStandard   = "sqlserver-se"
-	InstanceEngineSQLServerWeb        = "sqlserver-web"
+	instanceEngineAuroraMySQL         = "aurora-mysql"
+	instanceEngineAuroraPostgreSQL    = "aurora-postgresql"
+	instanceEngineDB2Advanced         = "db2-ae"
+	instanceEngineDB2Standard         = "db2-se"
+	instanceEngineMariaDB             = "mariadb"
+	instanceEngineMySQL               = "mysql"
+	instanceEngineOracleEnterprise    = "oracle-ee"
+	instanceEngineOracleEnterpriseCDB = "oracle-ee-cdb"
+	instanceEngineOracleStandard2     = "oracle-se2"
+	instanceEngineOracleStandard2CDB  = "oracle-se2-cdb"
+	instanceEnginePostgres            = "postgres"
+	instanceEngineSQLServerEnterprise = "sqlserver-ee"
+	instanceEngineSQLServerExpress    = "sqlserver-ex"
+	instanceEngineSQLServerStandard   = "sqlserver-se"
+	instanceEngineSQLServerWeb        = "sqlserver-web"
 
 	// Not valid for RDS instances.
 	instanceEngineDocDB   = "docdb"
 	instanceEngineNeptune = "neptune"
+
+	instanceEngineCustomPrefix = "custom-"
 )
 
 // https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/accessing-monitoring.html#Overview.DBInstance.Status.
@@ -168,10 +169,10 @@ func clusterEngine_Values() []string {
 
 func clusterInstanceEngine_Values() []string {
 	return []string{
-		clusterEngineAuroraMySQL,
-		clusterEngineAuroraPostgreSQL,
-		clusterEngineMySQL,
-		clusterEnginePostgres,
+		instanceEngineAuroraMySQL,
+		instanceEngineAuroraPostgreSQL,
+		instanceEngineMySQL,
+		instanceEnginePostgres,
 	}
 }
 

@@ -240,7 +240,7 @@ func sweepInstances(ctx context.Context, client *conns.AWSClient) ([]sweep.Sweep
 			case instanceEngineDocDB, instanceEngineNeptune:
 				// These engines are handled by their respective services' sweepers.
 				continue
-			case InstanceEngineMySQL:
+			case instanceEngineMySQL:
 				// "InvalidParameterValue: Deleting cluster instances isn't supported for DB engine mysql".
 				if clusterID := aws.ToString(v.DBClusterIdentifier); clusterID != "" {
 					log.Printf("[INFO] Skipping RDS DB Instance %s: DBClusterIdentifier=%s", id, clusterID)
