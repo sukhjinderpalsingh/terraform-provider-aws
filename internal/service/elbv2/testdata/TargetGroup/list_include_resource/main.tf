@@ -2,10 +2,14 @@
 # SPDX-License-Identifier: MPL-2.0
 
 resource "aws_lb_target_group" "test" {
-  name     = var.rName
+  count = var.resource_count
+
+  name     = "${var.rName}-${count.index}"
   port     = 443
   protocol = "HTTPS"
   vpc_id   = aws_vpc.test.id
+
+  tags = var.resource_tags
 }
 
 resource "aws_vpc" "test" {
@@ -17,13 +21,15 @@ variable "rName" {
   type        = string
   nullable    = false
 }
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "6.3.0"
-    }
-  }
+
+variable "resource_count" {
+  description = "Number of resources to create"
+  type        = number
+  nullable    = false
 }
 
-provider "aws" {}
+variable "resource_tags" {
+  description = "Tags to set on resource"
+  type        = map(string)
+  nullable    = false
+}
